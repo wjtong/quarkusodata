@@ -1,0 +1,16 @@
+quarkus:
+  datasource:
+    db-kind: postgresql
+    username: quarkusodata
+    password: quarkusodata
+    jdbc:
+      url: jdbc:postgresql://localhost:5432/quarkusodata
+  hibernate-orm:
+    database:
+      generation: drop-and-create
+edmconfig:
+  backend: db
+  services:
+    - srvname: test
+      entitytype:
+        - Party
