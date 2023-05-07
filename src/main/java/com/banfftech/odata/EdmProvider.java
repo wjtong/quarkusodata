@@ -1,5 +1,6 @@
 package com.banfftech.odata;
 
+import jakarta.inject.Inject;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.commons.api.edm.provider.*;
@@ -18,6 +19,9 @@ public class EdmProvider implements CsdlEdmProvider {
     private static final String ENTITY_TYPE_NAME_PARTY = "Party";
     private static final String ENTITY_SET_NAME_PARTIES = "Parties";
     private static final FullQualifiedName PERSON_FQN = new FullQualifiedName(NAMESPACE, ENTITY_TYPE_NAME_PARTY);
+
+    @Inject
+    EdmConfigLoader edmConfigLoader;
 
     @Override
     public CsdlEntityType getEntityType(FullQualifiedName entityTypeName) {
