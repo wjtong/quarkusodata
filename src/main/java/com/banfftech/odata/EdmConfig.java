@@ -6,12 +6,12 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.List;
 
-@ConfigMapping(prefix = "edmconfig")
+@ConfigMapping(prefix = "edm-config")
 public interface EdmConfig {
     public String backend();
     public List<OdataService> services();
     interface OdataService {
-        public String srvname();
-        public List<String> entitytype();
+        public String serviceName();
+        public List<String> entityType();
     }
 }

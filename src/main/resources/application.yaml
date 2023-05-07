@@ -8,9 +8,9 @@ quarkus:
   hibernate-orm:
     database:
       generation: drop-and-create
-edmconfig:
+edm-config:
   backend: db
   services:
-    - srvname: test
-      entitytype:
+    - service-name: test
+      entity-type:
         - Party
