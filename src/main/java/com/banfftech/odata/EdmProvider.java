@@ -6,9 +6,7 @@ import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.commons.api.edm.provider.*;
 import org.apache.olingo.commons.api.ex.ODataException;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class EdmProvider implements CsdlEdmProvider {
 
@@ -19,9 +17,13 @@ public class EdmProvider implements CsdlEdmProvider {
     private static final String ENTITY_TYPE_NAME_PARTY = "Party";
     private static final String ENTITY_SET_NAME_PARTIES = "Parties";
     private static final FullQualifiedName PERSON_FQN = new FullQualifiedName(NAMESPACE, ENTITY_TYPE_NAME_PARTY);
-
+    private static CsdlSchema csdlSchema;
     @Inject
     EdmConfigLoader edmConfigLoader;
+
+    public EdmProvider(String serviceName) {
+        edmConfigLoader.loadService(serviceName);
+    }
 
     @Override
     public CsdlEntityType getEntityType(FullQualifiedName entityTypeName) {
@@ -161,5 +163,71 @@ public class EdmProvider implements CsdlEdmProvider {
     public CsdlTypeDefinition getTypeDefinition(FullQualifiedName typeDefinitionName) {
         // We don't have any TypeDefinitions in this example
         return null;
+    }
+
+    private CsdlSchema createSchema(String namespace, EdmService edmService) throws ODataException {
+        // create Schema
+        CsdlSchema schema = new CsdlSchema();
+        schema.setNamespace(namespace);
+
+        // add EntityTypes
+        List<CsdlEntityType> entityTypes = new ArrayList<CsdlEntityType>();
+        entityTypes.addAll(edmService.getEntityTypes());
+        // schema.setEntityTypes(edmConfig.getEntityTypes(edmWebConfig));
+        // add complex types
+        List<CsdlComplexType> complexTypes = new ArrayList<CsdlComplexType>();
+        complexTypes.addAll(edmService.getComplexTypes());
+        // add enum types
+        List<CsdlEnumType> enumTypes = new ArrayList<CsdlEnumType>();
+        enumTypes.addAll(edmService.getEnumTypes());
+        // add functions
+        List<CsdlFunction> functions = new ArrayList<CsdlFunction>();
+        functions.addAll(edmService.getFunctions());
+        // add actions
+        List<CsdlAction> actions = new ArrayList<CsdlAction>();
+        actions.addAll(edmService.getActions());
+        // add EntityContainer
+//		schema.setEntityContainer(getEntityContainer());
+        schema.setEntityContainer(this.createEntityContainer(edmService));
+        // add Annotations
+        List<CsdlAnnotations> annotationses = new ArrayList<CsdlAnnotations>();
+        annotationses.addAll(edmService.getAnnotationses());
+        // add Terms
+        List<CsdlTerm> terms = new ArrayList<CsdlTerm>();
+        terms.addAll(edmService.getTerms());
+
+        schema.setEntityTypes(entityTypes);
+        schema.setComplexTypes(complexTypes);
+        schema.setEnumTypes(enumTypes);
+        schema.setFunctions(functions);
+        schema.setActions(actions);
+        schema.setAnnotationsGroup(annotationses);
+        schema.setTerms(terms);
+
+        return schema;
+    }
+
+    private CsdlEntityContainer createEntityContainer(EdmService edmService) throws ODataException {
+        CsdlEntityContainer entityContainer = new CsdlEntityContainer();
+        entityContainer.setName("BfContainer");
+
+        List<CsdlEntitySet> entitySets = new ArrayList<CsdlEntitySet>();
+        entitySets.addAll(edmService.getEntitySets());
+
+        List<CsdlFunctionImport> functionImports = new ArrayList<CsdlFunctionImport>();
+        functionImports.addAll(edmService.getFunctionImports());
+
+        List<CsdlActionImport> actionImports = new ArrayList<CsdlActionImport>();
+        actionImports.addAll(edmService.getActionImports());
+
+        List<CsdlSingleton> singletons = new ArrayList<CsdlSingleton>();
+        singletons.addAll(edmService.getSingletons());
+
+        entityContainer.setEntitySets(entitySets);
+        entityContainer.setFunctionImports(functionImports);
+        entityContainer.setActionImports(actionImports);
+        entityContainer.setSingletons(singletons);
+
+        return entityContainer;
     }
 }
