@@ -6,6 +6,7 @@ import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.commons.api.edm.provider.*;
 import org.apache.olingo.commons.api.ex.ODataException;
 
+import java.io.IOException;
 import java.util.*;
 
 public class EdmProvider implements CsdlEdmProvider {
@@ -22,7 +23,11 @@ public class EdmProvider implements CsdlEdmProvider {
     EdmConfigLoader edmConfigLoader;
 
     public EdmProvider(String serviceName) {
-        edmConfigLoader.loadService(serviceName);
+        try {
+            edmConfigLoader.loadService(serviceName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

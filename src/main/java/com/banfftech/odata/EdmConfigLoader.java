@@ -1,11 +1,17 @@
 package com.banfftech.odata;
 
 import com.banfftech.model.GenericEntity;
+import com.banfftech.odata.config.CustRequestManage;
+import com.banfftech.odata.config.EdmServiceConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.olingo.commons.api.edm.provider.CsdlEntityType;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Paths;
 import java.util.List;
 
 @ApplicationScoped
@@ -13,8 +19,13 @@ public class EdmConfigLoader {
     @Inject
     EdmConfig edmconfig;
 
-    public EdmService loadService(String serviceName) {
+    public EdmService loadService(String serviceName) throws IOException, ClassNotFoundException {
         EdmService edmService = new EdmService();
+        ObjectMapper objectMapper = new ObjectMapper();
+        String filePath = Paths.get("config", serviceName + ".json").toString();
+        EdmServiceConfig edmServiceConfig = (EdmServiceConfig) objectMapper.readValue(new File(filePath), Class.forName(serviceName));
+
+
         List<EdmConfig.OdataService> odataServiceList = edmconfig.services();
         for (EdmConfig.OdataService odataService:odataServiceList) {
             if (odataService.serviceName() == serviceName) {
