@@ -1,8 +1,6 @@
 package com.banfftech.odata;
 
 import com.banfftech.model.GenericEntity;
-import com.banfftech.odata.config.CustRequestManage;
-import com.banfftech.odata.config.EdmServiceConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -23,7 +21,7 @@ public class EdmConfigLoader {
         EdmService edmService = new EdmService();
         ObjectMapper objectMapper = new ObjectMapper();
         String filePath = Paths.get("config", serviceName + ".json").toString();
-        EdmServiceConfig edmServiceConfig = (EdmServiceConfig) objectMapper.readValue(new File(filePath), Class.forName(serviceName));
+        EdmServiceConfig edmServiceConfig = objectMapper.readValue(new File(filePath), EdmServiceConfig.class);
 
 
         List<EdmConfig.OdataService> odataServiceList = edmconfig.services();

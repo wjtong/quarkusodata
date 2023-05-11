@@ -1,8 +1,8 @@
-package com.banfftech.odata.config;
+package com.banfftech.odata;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class CustRequestManage extends EdmServiceConfig{
+public class EdmServiceConfig {
     @JsonProperty("service-name")
     private String serviceName;
 
