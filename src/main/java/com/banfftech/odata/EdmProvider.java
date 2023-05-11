@@ -25,7 +25,7 @@ public class EdmProvider implements CsdlEdmProvider {
     public EdmProvider(String serviceName) {
         try {
             edmConfigLoader.loadService(serviceName);
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
