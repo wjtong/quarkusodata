@@ -26,7 +26,7 @@ import java.util.logging.Logger;
 @Path("/odata.svc")
 public class ODataResource {
     private static final Logger LOGGER = Logger.getLogger(ODataResource.class.getName());
-    private static String serviceName = "test"; // should be from request path
+    private static String serviceName = "CustRequestManage"; // should be from request path
 
 //    @ConfigProperty(name = "edmconfig")
 //    EdmConfig edmConfig;
@@ -37,7 +37,8 @@ public class ODataResource {
     public Response getMetadata() {
 //        LOGGER.info(edmConfig.toString());
         try {
-            CsdlEdmProvider edmProvider = new EdmProvider(serviceName);
+            EdmProvider edmProvider = new EdmProvider(serviceName);
+            edmProvider.loadService();
             OData odata = OData.newInstance();
             ServiceMetadata serviceMetadata = odata.createServiceMetadata(edmProvider, new ArrayList<>());
             ODataSerializer serializer = odata.createSerializer(ContentType.APPLICATION_XML);
@@ -71,13 +72,17 @@ public class ODataResource {
         ODataResponse response = new ODataResponse();
 
         try {
+            EdmProvider edmProvider = new EdmProvider(serviceName);
+            edmProvider.loadService();
             OData odata = OData.newInstance();
-            ServiceMetadata serviceMetadata = odata.createServiceMetadata(new EdmProvider(serviceName), Collections.emptyList());
+            ServiceMetadata serviceMetadata = odata.createServiceMetadata(edmProvider, new ArrayList<>());
+//            OData odata = OData.newInstance();
+//            ServiceMetadata serviceMetadata = odata.createServiceMetadata(new EdmProvider(serviceName), Collections.emptyList());
 
             // Instantiate and register the DemoEntityCollectionProcessor
-            EntityCollectionProcessor processor = new EntityCollectionImp();
-            processor.init(odata, serviceMetadata);
+//            processor.init(odata, serviceMetadata);
             ODataHandler handler = odata.createRawHandler(serviceMetadata);
+            EntityCollectionProcessor processor = new EntityCollectionImp(edmProvider);
             handler.register(processor);
             response = handler.process(request);
         } catch (NotSupportedException e) {

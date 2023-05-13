@@ -1,6 +1,6 @@
 package com.banfftech.resource;
 
-import com.banfftech.model.product.product.Product;
+import com.banfftech.model.Product;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;

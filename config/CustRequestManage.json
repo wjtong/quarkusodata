@@ -8,7 +8,7 @@
     },
     {
       "entity-name": "Product",
-      "auto-properties": false
+      "auto-properties": true
     }
   ]
 }

@@ -5,6 +5,7 @@ import org.apache.olingo.commons.api.edm.provider.*;
 import java.util.*;
 
 public class EdmService {
+	private String namespace;
     private List<CsdlComplexType> complexTypes = new ArrayList<CsdlComplexType>();
     private List<CsdlEnumType> enumTypes = new ArrayList<CsdlEnumType>();
 	private Map<String, CsdlComplexType> complexTypeMap = new HashMap<String, CsdlComplexType>(); // key是ComplexType的name
@@ -22,6 +23,14 @@ public class EdmService {
     private List<CsdlAnnotations> annotationses = new ArrayList<CsdlAnnotations>();
     private Map<String, Map<String, CsdlAnnotations>> annotationsMap = new HashMap<String, Map<String, CsdlAnnotations>>(); // key是Annotations的Target, Qualifier
 	private List<String> mainEntityTypes = new ArrayList<>();
+
+	public String getNamespace() {
+		return namespace;
+	}
+
+	public void setNamespace(String namespace) {
+		this.namespace = namespace;
+	}
 
 	public List<String> getMainEntityTypes() {
 		return mainEntityTypes;

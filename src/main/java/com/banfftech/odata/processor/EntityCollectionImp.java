@@ -1,6 +1,9 @@
 package com.banfftech.odata.processor;
 
 import com.banfftech.Util;
+import com.banfftech.csdl.QuarkCsdlEntityType;
+import com.banfftech.edmconfig.EdmConst;
+import com.banfftech.odata.EdmProvider;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.Entity;
@@ -30,6 +33,11 @@ public class EntityCollectionImp implements org.apache.olingo.server.api.process
 
     private OData odata;
     private ServiceMetadata serviceMetadata;
+    private EdmProvider edmProvider;
+
+    public EntityCollectionImp(EdmProvider edmProvider) {
+        this.edmProvider = edmProvider;
+    }
 
     @Override
     public void init(OData odata, ServiceMetadata serviceMetadata) {
@@ -46,9 +54,10 @@ public class EntityCollectionImp implements org.apache.olingo.server.api.process
             EdmEntityType edmEntityType = edmEntitySet.getEntityType();
             String fqName = edmEntityType.getFullQualifiedName().getFullQualifiedNameAsString();
 
+            QuarkCsdlEntityType quarkCsdlEntityType = (QuarkCsdlEntityType) edmProvider.getEntityType(edmEntityType.getFullQualifiedName());
+            String quarkEntity = quarkCsdlEntityType.getQuarkEntity();
             // use PanacheEntity
-            String entityTypeName = edmEntityType.getName();
-            Class<?> objectClass = Class.forName(fqName);
+            Class<?> objectClass = Class.forName(quarkEntity);
             Method method = objectClass.getMethod("listAll");
             List<PanacheEntity> panacheEntities = (List<PanacheEntity>) method.invoke(objectClass);
             List<Entity> persons = Util.PanachesToEntities(edmEntityType, panacheEntities);

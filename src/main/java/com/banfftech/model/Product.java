@@ -1,4 +1,4 @@
-package com.banfftech.model.product.product;
+package com.banfftech.model;
 
 import com.banfftech.model.GenericEntity;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;

@@ -1,4 +1,4 @@
-package com.banfftech.model.party.party;
+package com.banfftech.model;
 
 import com.banfftech.model.GenericEntity;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;

@@ -1,11 +1,8 @@
 package com.banfftech.service;
 
-import com.banfftech.model.party.party.Party;
+import com.banfftech.model.Party;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.core.Response;
-
-import java.net.URI;
 
 @ApplicationScoped
 public class PartyService {
