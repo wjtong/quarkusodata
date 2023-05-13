@@ -9,26 +9,22 @@ import com.banfftech.edmconfig.EdmServiceConfig;
 import com.banfftech.model.GenericEntity;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
-import org.apache.olingo.commons.api.edm.provider.*;
-import org.w3c.dom.Element;
+import org.apache.olingo.commons.api.edm.provider.CsdlNavigationProperty;
+import org.apache.olingo.commons.api.edm.provider.CsdlProperty;
+import org.apache.olingo.commons.api.edm.provider.CsdlPropertyRef;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.nio.file.Paths;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 
 @ApplicationScoped
 public class EdmConfigLoader {
-    public EdmConfigLoader() {
-    }
-
     public EdmService loadService(String serviceName) throws IOException, ClassNotFoundException {
         EdmService edmService = new EdmService();
         ObjectMapper objectMapper = new ObjectMapper();

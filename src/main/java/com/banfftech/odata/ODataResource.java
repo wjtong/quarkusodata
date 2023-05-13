@@ -26,6 +26,8 @@ import java.util.logging.Logger;
 @Path("/odata.svc")
 public class ODataResource {
     private static final Logger LOGGER = Logger.getLogger(ODataResource.class.getName());
+    @Inject
+    EdmConfigLoader edmConfigLoader;
     private static String serviceName = "CustRequestManage"; // should be from request path
 
 //    @ConfigProperty(name = "edmconfig")
@@ -37,7 +39,7 @@ public class ODataResource {
     public Response getMetadata() {
 //        LOGGER.info(edmConfig.toString());
         try {
-            EdmProvider edmProvider = new EdmProvider(serviceName);
+            EdmProvider edmProvider = new EdmProvider(edmConfigLoader, serviceName);
             edmProvider.loadService();
             OData odata = OData.newInstance();
             ServiceMetadata serviceMetadata = odata.createServiceMetadata(edmProvider, new ArrayList<>());
@@ -72,7 +74,7 @@ public class ODataResource {
         ODataResponse response = new ODataResponse();
 
         try {
-            EdmProvider edmProvider = new EdmProvider(serviceName);
+            EdmProvider edmProvider = new EdmProvider(edmConfigLoader, serviceName);
             edmProvider.loadService();
             OData odata = OData.newInstance();
             ServiceMetadata serviceMetadata = odata.createServiceMetadata(edmProvider, new ArrayList<>());

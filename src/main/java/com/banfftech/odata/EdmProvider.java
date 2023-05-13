@@ -18,11 +18,11 @@ public class EdmProvider implements CsdlEdmProvider {
     private static final FullQualifiedName CONTAINER_FQN = new FullQualifiedName(NAMESPACE, CONTAINER_NAME);
     private static QuarkCsdlSchema csdlSchema;
     private String serviceName;
-    @Inject
+//    @Inject
     EdmConfigLoader edmConfigLoader;
 
-    public EdmProvider(String serviceName) {
-        this.edmConfigLoader = new EdmConfigLoader();
+    public EdmProvider(EdmConfigLoader edmConfigLoader, String serviceName) {
+        this.edmConfigLoader = edmConfigLoader;
         this.serviceName = serviceName;
     }
 
