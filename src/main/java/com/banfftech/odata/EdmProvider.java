@@ -1,6 +1,7 @@
 package com.banfftech.odata;
 
 import com.banfftech.csdl.QuarkCsdlSchema;
+import com.banfftech.edmconfig.EdmConst;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
@@ -13,9 +14,7 @@ import java.util.*;
 
 public class EdmProvider implements CsdlEdmProvider {
 
-    private static final String NAMESPACE = "com.banfftech";
-    private static final String CONTAINER_NAME = "Dpbird";
-    private static final FullQualifiedName CONTAINER_FQN = new FullQualifiedName(NAMESPACE, CONTAINER_NAME);
+    private static final FullQualifiedName CONTAINER_FQN = new FullQualifiedName(EdmConst.NAMESPACE, EdmConst.CONTAINER_NAME);
     private static QuarkCsdlSchema csdlSchema;
     private String serviceName;
 //    @Inject
@@ -181,7 +180,7 @@ public class EdmProvider implements CsdlEdmProvider {
 
     private CsdlEntityContainer createEntityContainer(EdmService edmService) throws ODataException {
         CsdlEntityContainer entityContainer = new CsdlEntityContainer();
-        entityContainer.setName(CONTAINER_NAME);
+        entityContainer.setName(EdmConst.CONTAINER_NAME);
 
         List<CsdlEntitySet> entitySets = new ArrayList<CsdlEntitySet>();
         entitySets.addAll(edmService.getEntitySets());
