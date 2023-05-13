@@ -1,6 +1,8 @@
-package com.banfftech.odata;
+package com.banfftech.edmconfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.List;
 
 public class EdmServiceConfig {
     @JsonProperty("service-name")
@@ -8,6 +10,9 @@ public class EdmServiceConfig {
 
     @JsonProperty("name-space")
     private String nameSpace;
+
+    @JsonProperty("entity-types")
+    private List<EdmEntityType> entityTypes;
 
     public String getServiceName() {
         return serviceName;
@@ -23,5 +28,13 @@ public class EdmServiceConfig {
 
     public void setNameSpace(String nameSpace) {
         this.nameSpace = nameSpace;
+    }
+
+    public List<EdmEntityType> getEntityTypes() {
+        return entityTypes;
+    }
+
+    public void setEntityTypes(List<EdmEntityType> entityTypes) {
+        this.entityTypes = entityTypes;
     }
 }

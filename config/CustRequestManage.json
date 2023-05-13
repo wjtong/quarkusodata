@@ -1,4 +1,14 @@
 {
   "service-name": "custRequestManage",
-  "name-space": "com.banfftech"
+  "name-space": "com.banfftech",
+  "entity-types": [
+    {
+      "entity-name": "Party",
+      "auto-properties": true
+    },
+    {
+      "entity-name": "Product",
+      "auto-properties": false
+    }
+  ]
 }
