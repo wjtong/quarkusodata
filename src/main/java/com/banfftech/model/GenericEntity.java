@@ -8,6 +8,9 @@ import org.hibernate.annotations.GenericGenerator;
 
 @MappedSuperclass
 public abstract class GenericEntity extends PanacheEntityBase {
+    public GenericEntity() {
+        super();
+    }
 
     @GeneratedValue(generator="cid")
     @GenericGenerator(name="cid", strategy= "uuid")

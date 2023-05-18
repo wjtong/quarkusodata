@@ -2,7 +2,7 @@ package com.banfftech.odata.processor;
 
 import com.banfftech.Util;
 import com.banfftech.csdl.QuarkCsdlEntityType;
-import com.banfftech.edmconfig.EdmConst;
+import com.banfftech.model.GenericEntity;
 import com.banfftech.odata.EdmProvider;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import org.apache.olingo.commons.api.data.ContextURL;
@@ -59,8 +59,8 @@ public class EntityCollectionImp implements org.apache.olingo.server.api.process
             // use PanacheEntity
             Class<?> objectClass = Class.forName(quarkEntity);
             Method method = objectClass.getMethod("listAll");
-            List<PanacheEntity> panacheEntities = (List<PanacheEntity>) method.invoke(objectClass);
-            List<Entity> persons = Util.PanachesToEntities(edmEntityType, panacheEntities);
+            List<GenericEntity> genericEntities = (List<GenericEntity>) method.invoke(objectClass);
+            List<Entity> persons = Util.GenericToEntities(edmEntityType, genericEntities);
 
             // Create an EntityCollection and set the sample data
             EntityCollection entityCollection = new EntityCollection();
@@ -78,6 +78,7 @@ public class EntityCollectionImp implements org.apache.olingo.server.api.process
             response.setStatusCode(HttpStatusCode.OK.getStatusCode());
             response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
         } catch (Exception e) {
+            e.printStackTrace();
             throw new ODataApplicationException("Error processing the request", HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), Locale.ENGLISH, e);
         }
     }

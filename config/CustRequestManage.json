@@ -9,6 +9,14 @@
     {
       "entity-name": "Product",
       "auto-properties": true
+    },
+    {
+      "entity-name": "Person",
+      "auto-properties": true
+    },
+    {
+      "entity-name": "PartyAndPerson",
+      "auto-properties": true
     }
   ]
 }
