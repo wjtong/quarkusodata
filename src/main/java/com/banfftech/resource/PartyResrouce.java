@@ -2,6 +2,7 @@ package com.banfftech.resource;
 
 import com.banfftech.model.Party;
 import com.banfftech.service.PartyService;
+import jakarta.annotation.security.PermitAll;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -18,6 +19,7 @@ public class PartyResrouce {
     PartyService partyService;
 
     @GET
+    @PermitAll
     public List<Party> list() {
         return Party.listAll();
     }

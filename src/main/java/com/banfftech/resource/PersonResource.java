@@ -1,6 +1,7 @@
 package com.banfftech.resource;
 
 import com.banfftech.model.Person;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -14,6 +15,7 @@ import java.util.List;
 @Consumes(MediaType.APPLICATION_JSON)
 public class PersonResource {
     @GET
+    @RolesAllowed("admin")
     public List<Person> list() {
         return Person.listAll();
     }

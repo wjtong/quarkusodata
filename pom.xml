@@ -40,7 +40,6 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-arc</artifactId>
     </dependency>
-    <!-- Olingo OData4 dependencies -->
     <dependency>
       <groupId>org.apache.olingo</groupId>
       <artifactId>odata-commons-core</artifactId>
@@ -61,15 +60,17 @@
       <artifactId>odata-server-api</artifactId>
       <version>4.9.0</version>
     </dependency>
-    <!-- Hibernate ORM specific dependencies -->
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-hibernate-orm-panache</artifactId>
     </dependency>
-    <!-- JDBC driver dependencies -->
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-jdbc-postgresql</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-security-jpa</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>

@@ -1,4 +1,7 @@
 quarkus:
+  http:
+    auth:
+      basic: true
   datasource:
     db-kind: postgresql
     username: quarkusodata
