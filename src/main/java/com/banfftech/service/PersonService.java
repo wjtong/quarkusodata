@@ -20,4 +20,12 @@ public class PersonService {
     public void delete(Person person) {
         person.delete();
     }
+    // find a Person entity by its primary key
+    public Person findById(String id) {
+        return Person.findById(id);
+    }
+    // find all Person entities
+    public Iterable<Person> findAll() {
+        return Person.listAll();
+    }
 }
