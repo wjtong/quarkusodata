@@ -1,5 +1,6 @@
 package com.banfftech.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.JoinFormula;
@@ -10,7 +11,8 @@ public class SupplierProduct extends GenericEntity {
     public String productId;
     public String partyId;
     @JoinColumn(name = "partyId", referencedColumnName = "id", insertable = false, updatable = false)
-    @ManyToOne
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     public Party party;
 
     public static String add(String partyId, String productId) {
