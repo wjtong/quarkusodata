@@ -4,14 +4,13 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.JoinFormula;
 
+// SupplierProduct has a many-to-one relationship with Party. The relationship is mapped by the partyId field in the SupplierProduct class.
 @Entity
 public class SupplierProduct extends GenericEntity {
     public String productId;
-    @Column(name = "partyid")
     public String partyId;
-//    @JoinTable(name = "party", joinColumns = @JoinColumn(name = "id", referencedColumnName = "partyid"))
+    @JoinColumn(name = "partyId", referencedColumnName = "id", insertable = false, updatable = false)
     @ManyToOne
-    @JoinFormula("partyid")
     public Party party;
 
     public static String add(String partyId, String productId) {
