@@ -4,7 +4,9 @@ import com.banfftech.Util;
 import com.banfftech.csdl.QuarkCsdlEntityType;
 import com.banfftech.model.GenericEntity;
 import com.banfftech.odata.EdmProvider;
+import com.banfftech.service.EntityService;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import jakarta.inject.Inject;
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.EntityCollection;
@@ -33,10 +35,10 @@ public class EntityCollectionImp implements org.apache.olingo.server.api.process
 
     private OData odata;
     private ServiceMetadata serviceMetadata;
-    private EdmProvider edmProvider;
+    private EntityService entityService;
 
-    public EntityCollectionImp(EdmProvider edmProvider) {
-        this.edmProvider = edmProvider;
+    public EntityCollectionImp(EntityService entityService) {
+        this.entityService = entityService;
     }
 
     @Override
@@ -52,14 +54,8 @@ public class EntityCollectionImp implements org.apache.olingo.server.api.process
             UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) resourcePaths.get(0);
             EdmEntitySet edmEntitySet = uriResourceEntitySet.getEntitySet();
             EdmEntityType edmEntityType = edmEntitySet.getEntityType();
-            String fqName = edmEntityType.getFullQualifiedName().getFullQualifiedNameAsString();
-
-            QuarkCsdlEntityType quarkCsdlEntityType = (QuarkCsdlEntityType) edmProvider.getEntityType(edmEntityType.getFullQualifiedName());
-            String quarkEntity = quarkCsdlEntityType.getQuarkEntity();
-            // use PanacheEntity
-            Class<?> objectClass = Class.forName(quarkEntity);
-            Method method = objectClass.getMethod("listAll");
-            List<GenericEntity> genericEntities = (List<GenericEntity>) method.invoke(objectClass);
+            String entityName = edmEntityType.getName();
+            List<GenericEntity> genericEntities = entityService.findEntity(entityName, null);
             List<Entity> persons = Util.GenericToEntities(edmEntityType, genericEntities);
 
             // Create an EntityCollection and set the sample data

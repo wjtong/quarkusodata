@@ -5,7 +5,8 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.JoinFormula;
 
-// SupplierProduct has a many-to-one relationship with Party. The relationship is mapped by the partyId field in the SupplierProduct class.
+// SupplierProduct has a many-to-one relationship with Party.
+// The relationship is mapped by the partyId field in the SupplierProduct class.
 @Entity
 public class SupplierProduct extends GenericEntity {
     public String productId;

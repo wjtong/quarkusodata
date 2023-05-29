@@ -1,6 +1,7 @@
 package com.banfftech.odata;
 
 import com.banfftech.odata.processor.EntityCollectionImp;
+import com.banfftech.service.EntityService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -28,11 +29,9 @@ public class ODataResource {
     private static final Logger LOGGER = Logger.getLogger(ODataResource.class.getName());
     @Inject
     EdmConfigLoader edmConfigLoader;
+    @Inject
+    EntityService entityService;
     private static String serviceName = "CustRequestManage"; // should be from request path
-
-//    @ConfigProperty(name = "edmconfig")
-//    EdmConfig edmConfig;
-
     @GET
     @Path("$metadata")
     @Produces(MediaType.APPLICATION_XML)
@@ -78,13 +77,8 @@ public class ODataResource {
             edmProvider.loadService();
             OData odata = OData.newInstance();
             ServiceMetadata serviceMetadata = odata.createServiceMetadata(edmProvider, new ArrayList<>());
-//            OData odata = OData.newInstance();
-//            ServiceMetadata serviceMetadata = odata.createServiceMetadata(new EdmProvider(serviceName), Collections.emptyList());
-
-            // Instantiate and register the DemoEntityCollectionProcessor
-//            processor.init(odata, serviceMetadata);
             ODataHandler handler = odata.createRawHandler(serviceMetadata);
-            EntityCollectionProcessor processor = new EntityCollectionImp(edmProvider);
+            EntityCollectionProcessor processor = new EntityCollectionImp(entityService);
             handler.register(processor);
             response = handler.process(request);
         } catch (NotSupportedException e) {
