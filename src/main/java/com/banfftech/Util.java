@@ -7,12 +7,11 @@ import org.apache.olingo.commons.api.data.Property;
 import org.apache.olingo.commons.api.data.ValueType;
 import org.apache.olingo.commons.api.edm.EdmEntityType;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
+import org.apache.olingo.server.api.uri.UriInfo;
+import org.apache.olingo.server.api.uri.queryoption.*;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class Util {
     public static Entity GenericToEntity(EdmEntityType edmEntityType, GenericEntity genericEntity) {
@@ -69,5 +68,46 @@ public class Util {
             list.add(value);
         }
         return list;
+    }
+
+    public static Map<String, QueryOption> getQuernOptions(UriInfo uriInfo) {
+        Map<String, QueryOption> queryOptions = new HashMap<>();
+        SelectOption selectOption = uriInfo.getSelectOption();
+        ExpandOption expandOption = uriInfo.getExpandOption();
+        SkipOption skipOption = uriInfo.getSkipOption();
+        CountOption countOption = uriInfo.getCountOption();
+        SearchOption searchOption = uriInfo.getSearchOption();
+        FilterOption filterOption = uriInfo.getFilterOption();
+        TopOption topOption = uriInfo.getTopOption();
+        OrderByOption orderByOption = uriInfo.getOrderByOption();
+        ApplyOption applyOption = uriInfo.getApplyOption();
+        if (selectOption != null) {
+            queryOptions.put("selectOption", selectOption);
+        }
+        if (expandOption != null) {
+            queryOptions.put("expandOption", expandOption);
+        }
+        if (skipOption != null) {
+            queryOptions.put("skipOption", skipOption);
+        }
+        if (countOption != null) {
+            queryOptions.put("countOption", countOption);
+        }
+        if (searchOption != null) {
+            queryOptions.put("searchOption", searchOption);
+        }
+        if (filterOption != null) {
+            queryOptions.put("filterOption", filterOption);
+        }
+        if (topOption != null) {
+            queryOptions.put("topOption", topOption);
+        }
+        if (orderByOption != null) {
+            queryOptions.put("orderByOption", orderByOption);
+        }
+        if (applyOption != null) {
+            queryOptions.put("applyOption", applyOption);
+        }
+        return queryOptions;
     }
 }

@@ -23,6 +23,8 @@ import org.apache.olingo.server.api.serializer.SerializerResult;
 import org.apache.olingo.server.api.uri.UriInfo;
 import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
+import org.apache.olingo.server.api.uri.queryoption.FilterOption;
+import org.apache.olingo.server.api.uri.queryoption.QueryOption;
 
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -30,6 +32,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class EntityCollectionImp implements org.apache.olingo.server.api.processor.EntityCollectionProcessor {
 
@@ -55,7 +58,9 @@ public class EntityCollectionImp implements org.apache.olingo.server.api.process
             EdmEntitySet edmEntitySet = uriResourceEntitySet.getEntitySet();
             EdmEntityType edmEntityType = edmEntitySet.getEntityType();
             String entityName = edmEntityType.getName();
-            List<GenericEntity> genericEntities = entityService.findEntity(entityName, null);
+            Map<String, QueryOption> queryOptions = Util.getQuernOptions(uriInfo);
+            FilterOption filterOption = (FilterOption) queryOptions.get("filterOption");
+            List<GenericEntity> genericEntities = entityService.findEntity(entityName, filterOption);
             List<Entity> persons = Util.GenericToEntities(edmEntityType, genericEntities);
 
             // Create an EntityCollection and set the sample data
