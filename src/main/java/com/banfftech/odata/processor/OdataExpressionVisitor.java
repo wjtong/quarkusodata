@@ -60,23 +60,20 @@ public class OdataExpressionVisitor implements ExpressionVisitor {
 
     @Override
     public Object visitMember(Member member) throws ExpressionVisitException, ODataApplicationException {
-//        final List<UriResource> uriResourceParts = member.getResourcePath().getUriResourceParts();
+        final List<UriResource> uriResourceParts = member.getResourcePath().getUriResourceParts();
 
         // 例如：Products?$filter=ProductFeatureAppl/any(c:c/productFeatureId eq 'SIZE_2' or c/productFeatureId eq 'SIZE_6')
         // uriResourceParts[0] 是ProductFeatureAppl
         // uriResourceParts[1] 是UriResourceLambdaAnyImpl，其lambdaVariable是c
         // 然后会再次进入这个方法，uriResourceParts[0]是UriResourceLambdaVarImpl，也就是c
         // uriResourceParts[1] 是productFeatureId
-        EdmType edmType = member.getType();
-        try {
-            if (edmType instanceof EdmPrimitiveType) {
-                return edmType.getName();
-            } else {
-                throw new ODataApplicationException("Type not supported",
-                        HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
-            }
-        } catch (ODataException e) {
-            throw new ODataApplicationException(e.getMessage(), HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), Locale.ENGLISH);
+        if (uriResourceParts.size() == 1 && uriResourceParts.get(0) instanceof UriResourcePrimitiveProperty) { // 这里就是简单单字段
+            UriResourcePrimitiveProperty uriResourceProperty = (UriResourcePrimitiveProperty) uriResourceParts.get(0);
+            EdmProperty edmProperty = uriResourceProperty.getProperty();
+            return edmProperty;
+        } else {
+            throw new ODataApplicationException("Only primitive properties are implemented in filter expressions.",
+                    HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
         }
     }
 

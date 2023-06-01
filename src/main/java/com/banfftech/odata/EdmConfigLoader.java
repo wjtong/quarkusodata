@@ -2,6 +2,7 @@ package com.banfftech.odata;
 
 import com.banfftech.csdl.QuarkCsdlEntitySet;
 import com.banfftech.csdl.QuarkCsdlEntityType;
+import com.banfftech.csdl.QuarkCsdlNavigationProperty;
 import com.banfftech.csdl.QuarkCsdlProperty;
 import com.banfftech.edmconfig.EdmConst;
 import com.banfftech.edmconfig.EdmEntityType;
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
+import org.apache.olingo.commons.api.edm.provider.CsdlAbstractEdmItem;
 import org.apache.olingo.commons.api.edm.provider.CsdlNavigationProperty;
 import org.apache.olingo.commons.api.edm.provider.CsdlProperty;
 import org.apache.olingo.commons.api.edm.provider.CsdlPropertyRef;
@@ -63,7 +65,7 @@ public class EdmConfigLoader {
         }
         GenericEntity modelEntity = null;
         List<CsdlProperty> csdlProperties = new ArrayList<>();
-        List<CsdlNavigationProperty> csdlNavigationProperties = null;
+        List<CsdlNavigationProperty> csdlNavigationProperties = new ArrayList<>();
         List<CsdlPropertyRef> csdlPropertyRefs = null;
         boolean filterByDate = false;
         String labelPrefix = name;
@@ -98,13 +100,13 @@ public class EdmConfigLoader {
                 if (excludeProperties != null && excludeProperties.contains(fieldName)) {
                     continue;
                 }
-                QuarkCsdlProperty csdlProperty = generatePropertyFromField(field, false);
-                if (csdlProperty != null) {
-                    if (csdlProperties.contains(csdlProperty)) {
-                        //已经xml定义了，就不要自动生成了
-                        continue;
+                CsdlAbstractEdmItem csdlAbstractEdmItem = generatePropertyFromField(field, false);
+                if (csdlAbstractEdmItem != null) {
+                    if (csdlAbstractEdmItem instanceof CsdlProperty) {
+                        csdlProperties.add((CsdlProperty) csdlAbstractEdmItem);
+                    } else if (csdlAbstractEdmItem instanceof CsdlNavigationProperty) {
+                        csdlNavigationProperties.add((CsdlNavigationProperty) csdlAbstractEdmItem);
                     }
-                    csdlProperties.add(csdlProperty);
                 }
             }
             // 添加主键
@@ -128,7 +130,7 @@ public class EdmConfigLoader {
         }
         return entityType;
     }
-    private static QuarkCsdlProperty generatePropertyFromField(Field field, boolean autoEnum) {
+    private static CsdlAbstractEdmItem generatePropertyFromField(Field field, boolean autoEnum) {
         if (field == null) {
             return null;
         }
@@ -144,6 +146,16 @@ public class EdmConfigLoader {
             csdlProperty.setType(EdmPrimitiveTypeKind.Date.getFullQualifiedName());
         } else if (fieldTypeName.equals("boolean")) {
             csdlProperty.setType(EdmPrimitiveTypeKind.Boolean.getFullQualifiedName());
+        } else if (fieldTypeName.startsWith("java.util.List")) {
+            String fieldStr = field.toGenericString();
+            String packageClassName = fieldStr.substring(fieldStr.indexOf("<") + 1, fieldStr.indexOf(">"));
+            String className = packageClassName.substring(packageClassName.lastIndexOf(".") + 1);
+            String fqn = EdmConst.NAMESPACE + "." + className;
+            QuarkCsdlNavigationProperty csdlNavigationProperty = new QuarkCsdlNavigationProperty();
+            csdlNavigationProperty.setType(new FullQualifiedName(fqn));
+            csdlNavigationProperty.setCollection(true);
+            csdlNavigationProperty.setName(fieldName);
+            return csdlNavigationProperty;
         } else {
             return null;
         }

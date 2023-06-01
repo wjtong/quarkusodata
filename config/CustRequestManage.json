@@ -17,6 +17,10 @@
     {
       "entity-name": "PartyAndPerson",
       "auto-properties": true
+    },
+    {
+      "entity-name": "SupplierProduct",
+      "auto-properties": true
     }
   ]
 }
