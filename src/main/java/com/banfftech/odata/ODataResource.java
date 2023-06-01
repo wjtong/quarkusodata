@@ -1,6 +1,7 @@
 package com.banfftech.odata;
 
 import com.banfftech.odata.processor.EntityCollectionImp;
+import com.banfftech.odata.processor.QuarkProcessor;
 import com.banfftech.service.EntityService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -30,7 +31,8 @@ public class ODataResource {
     @Inject
     EdmConfigLoader edmConfigLoader;
     @Inject
-    EntityService entityService;
+    QuarkProcessor quarkProcessor;
+
     private static String serviceName = "CustRequestManage"; // should be from request path
     @GET
     @Path("$metadata")
@@ -82,7 +84,7 @@ public class ODataResource {
             OData odata = OData.newInstance();
             ServiceMetadata serviceMetadata = odata.createServiceMetadata(edmProvider, new ArrayList<>());
             ODataHandler handler = odata.createRawHandler(serviceMetadata);
-            EntityCollectionProcessor processor = new EntityCollectionImp(entityService);
+            EntityCollectionProcessor processor = new EntityCollectionImp(quarkProcessor);
             handler.register(processor);
             response = handler.process(request);
         } catch (NotSupportedException e) {

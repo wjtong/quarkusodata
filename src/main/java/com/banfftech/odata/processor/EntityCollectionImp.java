@@ -38,10 +38,10 @@ public class EntityCollectionImp implements org.apache.olingo.server.api.process
 
     private OData odata;
     private ServiceMetadata serviceMetadata;
-    private EntityService entityService;
+    private QuarkProcessor quarkProcessor;
 
-    public EntityCollectionImp(EntityService entityService) {
-        this.entityService = entityService;
+    public EntityCollectionImp(QuarkProcessor quarkProcessor) {
+        this.quarkProcessor = quarkProcessor;
     }
 
     @Override
@@ -57,15 +57,8 @@ public class EntityCollectionImp implements org.apache.olingo.server.api.process
             UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) resourcePaths.get(0);
             EdmEntitySet edmEntitySet = uriResourceEntitySet.getEntitySet();
             EdmEntityType edmEntityType = edmEntitySet.getEntityType();
-            String entityName = edmEntityType.getName();
             Map<String, QueryOption> queryOptions = Util.getQuernOptions(uriInfo);
-            FilterOption filterOption = (FilterOption) queryOptions.get("filterOption");
-            List<GenericEntity> genericEntities = entityService.findEntity(entityName, filterOption);
-            List<Entity> persons = Util.GenericToEntities(edmEntityType, genericEntities);
-
-            // Create an EntityCollection and set the sample data
-            EntityCollection entityCollection = new EntityCollection();
-            entityCollection.getEntities().addAll(persons);
+            EntityCollection entityCollection = quarkProcessor.findList(edmEntityType, queryOptions);
 
             // Serialize the EntityCollection
             ODataSerializer serializer = odata.createSerializer(responseFormat);

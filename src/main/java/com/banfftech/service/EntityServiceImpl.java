@@ -8,6 +8,7 @@ import jakarta.inject.Inject;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
 import org.apache.olingo.server.api.ODataApplicationException;
 import org.apache.olingo.server.api.uri.queryoption.FilterOption;
+import org.apache.olingo.server.api.uri.queryoption.QueryOption;
 import org.apache.olingo.server.api.uri.queryoption.expression.ExpressionVisitException;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
@@ -16,6 +17,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @ApplicationScoped
 public class EntityServiceImpl implements EntityService {
@@ -23,8 +25,9 @@ public class EntityServiceImpl implements EntityService {
     private Session session;
 
     @Override
-    public List<GenericEntity> findEntity(String entityName, FilterOption filterOption) throws ODataApplicationException {
+    public List<GenericEntity> findEntity(String entityName, Map<String, QueryOption> queryOptions) throws ODataApplicationException {
         String packageEntityName = EdmConst.ENTITY_PACKAGE + "." + entityName;
+        FilterOption filterOption = (FilterOption) queryOptions.get("filterOption");
         OdataExpressionVisitor expressionVisitor = new OdataExpressionVisitor();
         String hql = "from " + entityName;
         String condition = null;
