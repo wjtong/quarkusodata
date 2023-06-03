@@ -11,4 +11,11 @@ import org.hibernate.annotations.GenericGenerator;
 @Entity
 public class Product extends GenericEntity {
     public String productName;
+    public static String add(String id, String productName) {
+        Product product = new Product();
+        product.id = id;
+        product.productName = productName;
+        product.persist();
+        return product.id;
+    }
 }
