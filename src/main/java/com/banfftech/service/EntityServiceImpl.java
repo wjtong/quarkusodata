@@ -5,6 +5,9 @@ import com.banfftech.model.GenericEntity;
 import com.banfftech.odata.processor.OdataExpressionVisitor;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.apache.olingo.commons.api.edm.provider.CsdlAbstractEdmItem;
+import org.apache.olingo.commons.api.edm.provider.CsdlNavigationProperty;
+import org.apache.olingo.commons.api.edm.provider.CsdlProperty;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
 import org.apache.olingo.server.api.ODataApplicationException;
 import org.apache.olingo.server.api.uri.queryoption.FilterOption;
@@ -13,6 +16,7 @@ import org.apache.olingo.server.api.uri.queryoption.expression.ExpressionVisitEx
 import org.hibernate.Session;
 import org.hibernate.query.Query;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -57,5 +61,33 @@ public class EntityServiceImpl implements EntityService {
 //            throw new RuntimeException(e);
 //        }
 //        return genericEntities;
+    }
+
+    @Override
+    public List<GenericEntity> findRelatedEntity(GenericEntity entity, String navigationName, Map<String, QueryOption> queryOptions) throws ODataApplicationException {
+        Field[] fields = entity.getClass().getDeclaredFields();
+        for (Field field:fields) {
+            String fieldName = field.getName();
+            if (!fieldName.equals(navigationName)) {
+                continue;
+            }
+            field.setAccessible(true);
+            Object fieldValue = null;
+            try {
+                fieldValue =field.get(entity);
+            } catch (IllegalAccessException e) {
+                throw new ODataApplicationException(e.getMessage(),
+                        HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
+            }
+            if (fieldValue == null) {
+                return null;
+            }
+            if (fieldValue instanceof List) {
+                return (List<GenericEntity>) fieldValue;
+            } else {
+                return List.of((GenericEntity) fieldValue);
+            }
+        }
+        return null;
     }
 }

@@ -3,9 +3,11 @@ package com.banfftech.odata.processor;
 import com.banfftech.Util;
 import com.banfftech.csdl.QuarkCsdlEntityType;
 import com.banfftech.model.GenericEntity;
+import com.banfftech.odata.QuarkEntity;
 import com.banfftech.service.EntityService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.apache.olingo.commons.api.Constants;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.EntityCollection;
 import org.apache.olingo.commons.api.data.Link;
@@ -30,7 +32,8 @@ public class QuarkProcessorImpl implements QuarkProcessor{
     EntityService entityService;
 
     @Override
-    public EntityCollection findList(EdmEntityType edmEntityType, Map<String, QueryOption> queryOptions) throws ODataApplicationException {
+    public EntityCollection findList(EdmEntityType edmEntityType, Map<String,
+            QueryOption> queryOptions) throws ODataApplicationException {
         String entityName = edmEntityType.getName();
         List<GenericEntity> genericEntities = entityService.findEntity(entityName, queryOptions);
         List<Entity> entities = Util.GenericToEntities(edmEntityType, genericEntities);
@@ -42,7 +45,8 @@ public class QuarkProcessorImpl implements QuarkProcessor{
         return entityCollection;
     }
 
-    private void addExpandOption(ExpandOption expandOption, List<Entity> entities, EdmEntityType edmEntityType) {
+    private void addExpandOption(ExpandOption expandOption, List<Entity> entities,
+                                 EdmEntityType edmEntityType) throws ODataApplicationException {
         if (expandOption == null) {
             return;
         }
@@ -69,7 +73,8 @@ public class QuarkProcessorImpl implements QuarkProcessor{
     private void addExpandNavigation(List<Entity> entities, EdmEntityType edmEntityType, EdmNavigationProperty navigationProperty, int expandLevel) {
     }
 
-    private void addAllExpandItem(List<Entity> entities, ExpandItem expandItem, EdmEntityType edmEntityType) {
+    private void addAllExpandItem(List<Entity> entities, ExpandItem expandItem,
+                                  EdmEntityType edmEntityType) throws ODataApplicationException {
         EdmNavigationProperty edmNavigationProperty = null;
         LevelsExpandOption levelsExpandOption = expandItem.getLevelsOption();
         int expandLevel = 1;
@@ -83,119 +88,121 @@ public class QuarkProcessorImpl implements QuarkProcessor{
         if (edmNavigationProperty == null) {
             return;
         }
-        Map<String, Object> embeddedEdmParams = new HashMap<>();
-        embeddedEdmParams.put("edmEntityType", edmEntityType);
-        embeddedEdmParams.put("edmNavigationProperty", edmNavigationProperty);
+        for (Entity entity : entities) {
+            addExpandItem(entity, expandItem, edmEntityType);
+        }
+    }
+
+    private void addExpandItem(Entity entity, ExpandItem expandItem, EdmEntityType edmEntityType) throws ODataApplicationException {
+        EdmNavigationProperty edmNavigationProperty = null;
+        LevelsExpandOption levelsExpandOption = expandItem.getLevelsOption();
+        int expandLevel = 1;
+        if (levelsExpandOption != null) {
+            expandLevel = levelsExpandOption.getValue();
+        }
+        List<UriResource> expandItemPath = expandItem.getResourcePath().getUriResourceParts();
+        UriResource uriResource = expandItemPath.get(0);
+        if (uriResource instanceof UriResourceNavigation) {
+            edmNavigationProperty = ((UriResourceNavigation) uriResource).getProperty();
+        }
+        if (edmNavigationProperty == null) {
+            return;
+        }
+        String navPropName = edmNavigationProperty.getName();
         Map<String, QueryOption> embeddedQueryOptions = new HashMap<>();
-        embeddedQueryOptions.put("expandOption", expandItem.getExpandOption());
+        embeddedQueryOptions.put("orderByOption", expandItem.getOrderByOption());
+        embeddedQueryOptions.put("selectOption", expandItem.getSelectOption());
+        embeddedQueryOptions.put("searchOption", expandItem.getSearchOption());
         embeddedQueryOptions.put("filterOption", expandItem.getFilterOption());
-//        UtilMisc.toMap("expandOption", expandItem.getExpandOption(),
-//        "orderByOption", expandItem.getOrderByOption(), "selectOption", expandItem.getSelectOption(), "filterOption", expandItem.getFilterOption(),
-//        "skipOption", expandItem.getSkipOption(), "topOption", expandItem.getTopOption());
-        if (edmNavigationProperty.isCollection()) {
-            ExpandOption nestedExpandOption = expandItem.getExpandOption();
+        if (edmNavigationProperty.isCollection()) { // expand的对象是collection
+            ExpandOption nestedExpandOption = expandItem.getExpandOption(); // expand nested in expand
             if (nestedExpandOption == null && expandLevel > 1) {
                 ExpandOptionImpl expandOptionImpl = new ExpandOptionImpl();
                 LevelsOptionImpl levelsOptionImpl = (LevelsOptionImpl) levelsExpandOption;
                 levelsOptionImpl.setValue(expandLevel--);
                 expandOptionImpl.addExpandItem(expandItem);
                 nestedExpandOption = expandOptionImpl;
+            }
+            if (nestedExpandOption != null) {
                 embeddedQueryOptions.put("expandOption", nestedExpandOption);
             }
+            embeddedQueryOptions.put("expandOption", nestedExpandOption);
+            expandCollection(entity, edmEntityType, edmNavigationProperty, embeddedQueryOptions);
+        } else { // expand对象不是collection
+            embeddedQueryOptions.put("expandOption", expandItem.getExpandOption());
+            expandNonCollection(entity, edmEntityType, edmNavigationProperty, embeddedQueryOptions);
+        } // end expand对象不是collection
+    }
+
+    private void expandNonCollection(Entity entity, EdmEntityType edmEntityType,
+                                     EdmNavigationProperty edmNavigationProperty,
+                                     Map<String, QueryOption> queryOptions) throws ODataApplicationException {
+        EntityCollection expandEntityCollection = getExpandData(entity, edmEntityType, edmNavigationProperty, queryOptions);
+        if (null != expandEntityCollection && expandEntityCollection.getEntities() != null) {
+            Entity expandEntity = expandEntityCollection.getEntities().get(0);
+            expandEntityCollection.setCount(expandEntityCollection.getEntities().size());
+            Link link = new Link();
+            String navPropName = edmNavigationProperty.getName();
+            link.setTitle(navPropName);
+            link.setType(Constants.ENTITY_NAVIGATION_LINK_TYPE);
+            link.setRel(Constants.NS_ASSOCIATION_LINK_REL + navPropName);
+            link.setInlineEntity(expandEntity);
+            if (entity.getId() != null) {
+                String linkHref = entity.getId().toString() + "/" + navPropName;
+                link.setHref(linkHref);
+            }
+            entity.getNavigationLinks().add(link);
         }
-//        OdataReader reader = new OdataReader(getOdataContext(), embeddedQueryOptions, embeddedEdmParams);
-        this.addDefaultExpandLink(entities, edmNavigationProperty, embeddedQueryOptions);
+   }
+
+    private EntityCollection getExpandData(Entity entity, EdmEntityType edmEntityType,
+                                           EdmNavigationProperty edmNavigationProperty,
+                                           Map<String, QueryOption> queryOptions) throws ODataApplicationException {
+        Map<String, Object> embeddedEdmParams = new HashMap<>();
+        embeddedEdmParams.put("edmEntityType", edmEntityType);
+        embeddedEdmParams.put("edmNavigationProperty", edmNavigationProperty);
+        return findRelatedList((QuarkEntity) entity, edmNavigationProperty, queryOptions, null);
+    }
+    public EntityCollection findRelatedList(QuarkEntity entity, EdmNavigationProperty edmNavigationProperty,
+                                            Map<String, QueryOption> queryOptions, Map<String, Object> navPrimaryKey)
+            throws ODataApplicationException {
+        EntityCollection entityCollection = new EntityCollection();
+        List<GenericEntity> genericEntities = entityService.findRelatedEntity(entity.getGenericEntity(), edmNavigationProperty.getName(), queryOptions);
+        List<Entity> entities = Util.GenericToEntities(edmNavigationProperty.getType(), genericEntities);
+        //filter、orderby、page
+        FilterOption filterOption = (FilterOption) queryOptions.get("filterOption");
+        OrderByOption orderbyOption = (OrderByOption) queryOptions.get("orderByOption");
+//        if (filterOption != null || orderbyOption != null) {
+//            Util.filterEntityCollection(entityCollection, filterOption, orderbyOption, edmNavigationProperty.getType(),
+//                    edmProvider, delegator, dispatcher, userLogin, locale, csdlNavigationProperty.isFilterByDate());
+//        }
+        entityCollection.getEntities().addAll(entities);
+        entityCollection.setCount(entityCollection.getEntities().size());
+//        if (Util.isExtraOrderby(orderbyOption, navCsdlEntityType, delegator)) {
+//            Util.orderbyEntityCollection(entityCollection, orderbyOption, edmNavigationProperty.getType(), edmProvider);
+//        }
+//        Util.pageEntityCollection(entityCollection, skipValue, topValue);
+        if (queryOptions != null && queryOptions.get("expandOption") != null) {
+            addExpandOption((ExpandOption) queryOptions.get("expandOption"), entityCollection.getEntities(), edmNavigationProperty.getType());
+        }
+        return entityCollection;
     }
 
-    private void addDefaultExpandLink(List<Entity> entities, EdmNavigationProperty edmNavigationProperty, Map<String, QueryOption> queryOptions) {
-//        FilterOption filterOption = (FilterOption) queryOptions.get("filterOption");
-//        //filter的条件
-//        if (filterOption != null) {
-//            OdataExpressionVisitor expressionVisitor = new OdataExpressionVisitor();
-//            try {
-//                condition = (EntityCondition) filterOption.getExpression().accept(expressionVisitor);
-//            } catch (ExpressionVisitException | ODataApplicationException e) {
-//                throw new OfbizODataException(e.getMessage());
-//            }
-//        }
-//        EdmBindingTarget navBindingTarget = null;
-//        EdmBindingTarget edmBindingTarget = (EdmBindingTarget) edmParams.get("edmBindingTarget");
-//        if (edmBindingTarget != null) {
-//            navBindingTarget = Util.getNavigationTargetEntitySet(edmBindingTarget, edmNavigationProperty);
-//        }
-//        EdmEntityType edmNavigationPropertyType = edmNavigationProperty.getType();
-//        OfbizCsdlEntityType csdlEntityType = (OfbizCsdlEntityType) edmProvider.getEntityType(edmEntityType.getFullQualifiedName());
-//        OfbizCsdlNavigationProperty csdlNavigationProperty = (OfbizCsdlNavigationProperty) csdlEntityType.getNavigationProperty(edmNavigationProperty.getName());
-//        OfbizCsdlEntityType navCsdlEntityType = (OfbizCsdlEntityType) edmProvider.getEntityType(csdlNavigationProperty.getTypeFQN());
-//        List<String> orderbyList = Util.convertOrderbyToField(navCsdlEntityType, orderbyOption);
-//        List<GenericValue> genericValueList = entityList.stream().map(e -> ((OdataOfbizEntity) e).getGenericValue()).collect(Collectors.toList());
-//        //find
-//        List<GenericValue> relatedGenericList = getAllDataFromRelations(genericValueList, csdlNavigationProperty, condition, orderbyList);
-//        if (UtilValidate.isEmpty(relatedGenericList)) {
-//            return;
-//        }
-//        List<Entity> relatedEntityList = new ArrayList<>();
-//        for (GenericValue genericValue : relatedGenericList) {
-//            Entity resultToEntity = findResultToEntity(navBindingTarget, edmNavigationPropertyType, genericValue);
-//            if (navCsdlEntityType.hasStream()) {
-//                resultToEntity.getProperties().removeIf(property -> "Edm.Stream".equals(property.getType()));
-//            }
-//            relatedEntityList.add(resultToEntity);
-//        }
-//        //获取relation关联字段
-//        ModelEntity modelEntity = delegator.getModelEntity(csdlEntityType.getOfbizEntity());
-//        EntityTypeRelAlias relAlias = csdlNavigationProperty.getRelAlias();
-//        List<String> relations = relAlias.getRelations();
-//        List<ModelKeyMap> relKeyMaps = modelEntity.getRelation(relations.get(0)).getKeyMaps();
-//        List<String> fieldNames = new ArrayList<>();
-//        List<String> relFieldNames = new ArrayList<>();
-//        for (ModelKeyMap relKeyMap : relKeyMaps) {
-//            fieldNames.add(relKeyMap.getFieldName());
-//            String relFieldName = relKeyMap.getRelFieldName();
-//            //多段的relations查询时是添加了前缀的,所以当取值的时候也要加前缀
-//            if (relations.size() > 1) {
-//                relFieldName = relations.get(0) + Util.firstUpperCase(relFieldName);
-//            }
-//            relFieldNames.add(relFieldName);
-//        }
-//        Map<GenericValue, Entity> expandDataMap = new LinkedHashMap<>();
-//        for (int i = 0; i < relatedEntityList.size(); i++) {
-//            expandDataMap.put(relatedGenericList.get(i), relatedEntityList.get(i));
-//        }
-//        //处理下一层expand
-//        recursionExpand(entityList, expandDataMap, navBindingTarget, edmNavigationProperty, relAlias, fieldNames, relFieldNames);
-//        //将查询出来的数据根据主外键进行匹配
-//        if (edmNavigationProperty.isCollection()) {
-//            Map<String, Entity> mainEntityMap = new HashMap<>();
-//            for (Entity entity : entities) {
-//                OdataOfbizEntity mainEntity = (OdataOfbizEntity) entity;
-//                String fkString = getFieldShortValue(fieldNames, mainEntity.getGenericValue());
-//                mainEntityMap.put(fkString, entity);
-//            }
-//            for (Map.Entry<GenericValue, Entity> entry : expandDataMap.entrySet()) {
-//                String fkString = getFieldShortValue(relFieldNames, entry.getKey());
-//                addEntityToLink(mainEntityMap.get(fkString), edmNavigationProperty, entry.getValue());
-//            }
-////            //分页InlineEntitySet
-////            if (queryOptions.get("skipOption") != null || queryOptions.get("topOption") != null) {
-////                for (Entity entity : entityList) {
-////                    Link navigationLink = entity.getNavigationLink(edmNavigationProperty.getName());
-////                    EntityCollection entityCollection = navigationLink.getInlineEntitySet();
-////                    Util.pageEntityCollection(entityCollection, skipValue, topValue);
-////                }
-////            }
-//        } else {
-//            Map<String, Entity> subEntityMap = new HashMap<>();
-//            for (Map.Entry<GenericValue, Entity> entry : expandDataMap.entrySet()) {
-//                String fkString = getFieldShortValue(relFieldNames, entry.getKey());
-//                subEntityMap.put(fkString, entry.getValue());
-//            }
-//            for (Entity entity : entities) {
-//                OdataOfbizEntity mainOfbizEn = (OdataOfbizEntity) entity;
-//                String fkString = getFieldShortValue(fieldNames, mainOfbizEn.getGenericValue());
-//                addEntityToLink(entity, edmNavigationProperty, subEntityMap.get(fkString));
-//            }
-//        }
+    private void expandCollection(Entity entity, EdmEntityType edmEntityType,
+                                  EdmNavigationProperty edmNavigationProperty,
+                                  Map<String, QueryOption> queryOptions) throws ODataApplicationException {
+        EntityCollection expandEntityCollection = getExpandData(entity, edmEntityType, edmNavigationProperty, queryOptions);
+        String navPropName = edmNavigationProperty.getName();
+        Link link = new Link();
+        link.setTitle(navPropName);
+        link.setType(Constants.ENTITY_NAVIGATION_LINK_TYPE);
+        link.setRel(Constants.NS_ASSOCIATION_LINK_REL + navPropName);
+        link.setInlineEntitySet(expandEntityCollection);
+        expandEntityCollection.setCount(expandEntityCollection.getEntities().size());
+        if (entity.getId() != null) { // TODO:要检查一下为什么会有id为null的情况
+            String linkHref = entity.getId().toString() + "/" + navPropName;
+            link.setHref(linkHref);
+        }
+        entity.getNavigationLinks().add(link);
     }
-
 }

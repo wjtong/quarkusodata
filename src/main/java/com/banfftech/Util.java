@@ -2,6 +2,7 @@ package com.banfftech;
 
 import com.banfftech.edmconfig.EdmConst;
 import com.banfftech.model.GenericEntity;
+import com.banfftech.odata.QuarkEntity;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.Property;
 import org.apache.olingo.commons.api.data.ValueType;
@@ -16,7 +17,7 @@ import java.util.*;
 public class Util {
     public static Entity GenericToEntity(EdmEntityType edmEntityType, GenericEntity genericEntity) {
         try {
-            Entity e1 = new Entity();
+            QuarkEntity e1 = new QuarkEntity();
             String entityFqn = edmEntityType.getFullQualifiedName().getFullQualifiedNameAsString();
             e1.setType(entityFqn);
             String classPackage = EdmConst.ENTITY_PACKAGE + "." + edmEntityType.getName();
@@ -43,6 +44,7 @@ public class Util {
                 }
                 e1.addProperty(theProperty);
             }
+            e1.setGenericEntity(genericEntity);
             return e1;
         } catch (Exception e) {
             e.printStackTrace();
@@ -68,6 +70,16 @@ public class Util {
             list.add(value);
         }
         return list;
+    }
+    public static String getQueryString(String filter, String expand) {
+        String queryString = null;
+        if (filter != null) {
+            queryString = "$filter=" + filter;
+        }
+        if (expand != null) {
+            queryString = queryString != null ? queryString + "&$expand=" + expand : "$expand=" + expand;
+        }
+        return queryString;
     }
 
     public static Map<String, QueryOption> getQuernOptions(UriInfo uriInfo) {

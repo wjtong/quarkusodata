@@ -1,5 +1,6 @@
 package com.banfftech.odata;
 
+import com.banfftech.Util;
 import com.banfftech.odata.processor.EntityCollectionImp;
 import com.banfftech.odata.processor.QuarkProcessor;
 import com.banfftech.service.EntityService;
@@ -65,10 +66,12 @@ public class ODataResource {
 
     @GET
     @Path("/{odataPath:.+}")
-    public Response processODataRequest(@PathParam("odataPath") String odataPath, @QueryParam("$filter") String filter) {
+    public Response processODataRequest(@PathParam("odataPath") String odataPath,
+                                        @QueryParam("$filter") String filter,
+                                        @QueryParam("$expand") String expand) {
         ODataRequest request = new ODataRequest();
         String baseUri = "http://localhost:8080/odata.svc";
-        String queryString = filter != null ? "$filter=" + filter : null;
+        String queryString = Util.getQueryString(filter, expand);
         request.setRawBaseUri(baseUri);
         request.setRawODataPath(odataPath);
         request.setRawServiceResolutionUri("/");
