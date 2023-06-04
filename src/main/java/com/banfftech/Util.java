@@ -15,7 +15,7 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 public class Util {
-    public static Entity GenericToEntity(EdmEntityType edmEntityType, GenericEntity genericEntity) {
+    public static QuarkEntity GenericToEntity(EdmEntityType edmEntityType, GenericEntity genericEntity) {
         try {
             QuarkEntity e1 = new QuarkEntity();
             String entityFqn = edmEntityType.getFullQualifiedName().getFullQualifiedNameAsString();
@@ -52,10 +52,10 @@ public class Util {
         }
     }
 
-    public static List<Entity> GenericToEntities(EdmEntityType edmEntityType, List<GenericEntity> genericEntities) {
-        List<Entity> entities = new ArrayList<>();
+    public static List<QuarkEntity> GenericToEntities(EdmEntityType edmEntityType, List<GenericEntity> genericEntities) {
+        List<QuarkEntity> entities = new ArrayList<>();
         for (GenericEntity genericEntity:genericEntities) {
-            Entity entity = GenericToEntity(edmEntityType, genericEntity);
+            QuarkEntity entity = GenericToEntity(edmEntityType, genericEntity);
             entities.add(entity);
         }
         return entities;

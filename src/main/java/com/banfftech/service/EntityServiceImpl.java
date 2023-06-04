@@ -90,4 +90,20 @@ public class EntityServiceImpl implements EntityService {
         }
         return null;
     }
+
+    @Override
+    public GenericEntity findEntityById(String entityName, String id) throws ODataApplicationException {
+        // use PanacheEntity
+        Class<?> objectClass = null;
+        GenericEntity genericEntity = null;
+        try {
+            String packageEntityName = EdmConst.ENTITY_PACKAGE + "." + entityName;
+            objectClass = Class.forName(packageEntityName);
+            Method method = objectClass.getMethod("findById", Object.class);
+            genericEntity = (GenericEntity) method.invoke(objectClass, id);
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+        return genericEntity;
+    }
 }

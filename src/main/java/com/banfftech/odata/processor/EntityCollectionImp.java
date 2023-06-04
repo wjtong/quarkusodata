@@ -4,6 +4,7 @@ import com.banfftech.Util;
 import com.banfftech.csdl.QuarkCsdlEntityType;
 import com.banfftech.model.GenericEntity;
 import com.banfftech.odata.EdmProvider;
+import com.banfftech.odata.QuarkEntity;
 import com.banfftech.service.EntityService;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.inject.Inject;
@@ -13,6 +14,7 @@ import org.apache.olingo.commons.api.data.EntityCollection;
 import org.apache.olingo.commons.api.edm.EdmBindingTarget;
 import org.apache.olingo.commons.api.edm.EdmEntitySet;
 import org.apache.olingo.commons.api.edm.EdmEntityType;
+import org.apache.olingo.commons.api.edm.EdmNavigationProperty;
 import org.apache.olingo.commons.api.ex.ODataRuntimeException;
 import org.apache.olingo.commons.api.format.ContentType;
 import org.apache.olingo.commons.api.http.HttpHeader;
@@ -22,9 +24,7 @@ import org.apache.olingo.server.api.serializer.EntityCollectionSerializerOptions
 import org.apache.olingo.server.api.serializer.ODataSerializer;
 import org.apache.olingo.server.api.serializer.SerializerException;
 import org.apache.olingo.server.api.serializer.SerializerResult;
-import org.apache.olingo.server.api.uri.UriInfo;
-import org.apache.olingo.server.api.uri.UriResource;
-import org.apache.olingo.server.api.uri.UriResourceEntitySet;
+import org.apache.olingo.server.api.uri.*;
 import org.apache.olingo.server.api.uri.queryoption.*;
 
 import java.io.InputStream;
@@ -54,13 +54,50 @@ public class EntityCollectionImp implements org.apache.olingo.server.api.process
     @Override
     public void readEntityCollection(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat) throws ODataApplicationException {
         try {
-            List<UriResource> resourcePaths = uriInfo.getUriResourceParts();
-            UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) resourcePaths.get(0);
-            EdmEntitySet edmEntitySet = uriResourceEntitySet.getEntitySet();
-            EdmEntityType edmEntityType = edmEntitySet.getEntityType();
+            List<UriResource> uriResourceParts = uriInfo.getUriResourceParts();
             Map<String, QueryOption> queryOptions = Util.getQuernOptions(uriInfo);
-            EntityCollection entityCollection = quarkProcessor.findList(edmEntityType, queryOptions);
-            serializeEntityCollection(request, response, edmEntitySet, edmEntityType,
+            QuarkEntity entity = null;
+            EdmEntityType targetEntityType = null;
+            EdmBindingTarget edmBindingTarget = null;
+            EntityCollection entityCollection = null;
+            int resourcePartsSize = uriResourceParts.size();
+            int i = 0;
+            for (UriResource uriResource:uriResourceParts) {
+                Map<String, QueryOption> useQueryOptions = null;
+                if (i == resourcePartsSize - 1) { // 只有到最后一段采用queryOptions
+                    useQueryOptions = queryOptions;
+                }
+                if (uriResource instanceof UriResourceEntitySet) {
+                    UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriResource;
+                    EdmEntitySet edmEntitySet = uriResourceEntitySet.getEntitySet();
+                    EdmEntityType edmEntityType = edmEntitySet.getEntityType();
+                    List<UriParameter> keyParameters = uriResourceEntitySet.getKeyPredicates();
+                    if (keyParameters != null && keyParameters.size() > 0) {
+                        entity = quarkProcessor.findOne(edmEntityType, keyParameters, useQueryOptions);
+                    } else {
+                        entityCollection = quarkProcessor.findList(edmEntityType, useQueryOptions);
+                    }
+                    targetEntityType = edmEntityType;
+                    edmBindingTarget = edmEntitySet;
+                } else if (uriResource instanceof UriResourceNavigation) { // 前面肯定有entity查出来了
+                    UriResourceNavigation uriResourceNavigation = (UriResourceNavigation) uriResource;
+                    EdmNavigationProperty edmNavigationProperty = uriResourceNavigation.getProperty();
+                    EdmEntityType edmEntityType = edmNavigationProperty.getType();
+                    List<UriParameter> keyPredicates = uriResourceNavigation.getKeyPredicates();
+                    if (keyPredicates != null && keyPredicates.size() > 0) {
+                        entity = quarkProcessor.findOne(targetEntityType, keyPredicates, useQueryOptions);
+                    } else {
+                        if (edmNavigationProperty.isCollection()) {
+                            entityCollection = quarkProcessor.findRelatedList(entity, edmNavigationProperty, useQueryOptions);
+                        } else {
+                            entity = quarkProcessor.findRelatedOne(entity, edmNavigationProperty, useQueryOptions);
+                        }
+                    }
+                    targetEntityType = edmEntityType;
+                    edmBindingTarget = edmBindingTarget.getRelatedBindingTarget(edmNavigationProperty.getName());
+                }
+            }
+            serializeEntityCollection(request, response, edmBindingTarget, targetEntityType,
                     responseFormat, entityCollection, queryOptions);
         } catch (Exception e) {
             e.printStackTrace();

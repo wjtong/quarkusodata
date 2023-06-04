@@ -12,10 +12,12 @@ import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.EntityCollection;
 import org.apache.olingo.commons.api.data.Link;
 import org.apache.olingo.commons.api.edm.EdmBindingTarget;
+import org.apache.olingo.commons.api.edm.EdmEntitySet;
 import org.apache.olingo.commons.api.edm.EdmEntityType;
 import org.apache.olingo.commons.api.edm.EdmNavigationProperty;
 import org.apache.olingo.commons.api.edm.provider.CsdlEntityType;
 import org.apache.olingo.server.api.ODataApplicationException;
+import org.apache.olingo.server.api.uri.UriParameter;
 import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceNavigation;
 import org.apache.olingo.server.api.uri.queryoption.*;
@@ -36,7 +38,7 @@ public class QuarkProcessorImpl implements QuarkProcessor{
             QueryOption> queryOptions) throws ODataApplicationException {
         String entityName = edmEntityType.getName();
         List<GenericEntity> genericEntities = entityService.findEntity(entityName, queryOptions);
-        List<Entity> entities = Util.GenericToEntities(edmEntityType, genericEntities);
+        List<QuarkEntity> entities = Util.GenericToEntities(edmEntityType, genericEntities);
         EntityCollection entityCollection = new EntityCollection();
         entityCollection.getEntities().addAll(entities);
         if (queryOptions != null && queryOptions.get("expandOption") != null) {
@@ -45,7 +47,55 @@ public class QuarkProcessorImpl implements QuarkProcessor{
         return entityCollection;
     }
 
-    private void addExpandOption(ExpandOption expandOption, List<Entity> entities,
+    @Override
+    public QuarkEntity findOne(EdmEntityType edmEntityType, List<UriParameter> keyPredicates,
+                          Map<String, QueryOption> queryOptions) throws ODataApplicationException {
+        String entityName = edmEntityType.getName();
+        String regexp = "\'";
+        String keyText = keyPredicates.get(0).getText();
+        String id = keyText.replaceAll(regexp, "");
+        GenericEntity genericEntity = entityService.findEntityById(entityName, id);
+        QuarkEntity entity = Util.GenericToEntity(edmEntityType, genericEntity);
+        if (queryOptions != null && queryOptions.get("expandOption") != null) {
+            addExpandOption((ExpandOption) queryOptions.get("expandOption"), List.of(entity), edmEntityType);
+        }
+        return entity;
+    }
+
+    @Override
+    public QuarkEntity findRelatedOne(QuarkEntity entity, EdmNavigationProperty edmNavigationProperty,
+                                 Map<String, QueryOption> queryOptions) throws ODataApplicationException {
+        List<GenericEntity> genericEntities = entityService.findRelatedEntity(entity.getGenericEntity(), edmNavigationProperty.getName(), queryOptions);
+        if (genericEntities != null && genericEntities.size() > 0) {
+            GenericEntity genericEntity = genericEntities.get(0);
+            EdmEntityType edmEntityType = (EdmEntityType) edmNavigationProperty.getType();
+            QuarkEntity relatedEntity = Util.GenericToEntity(edmEntityType, genericEntity);
+            if (queryOptions != null && queryOptions.get("expandOption") != null) {
+                addExpandOption((ExpandOption) queryOptions.get("expandOption"), List.of(relatedEntity), edmEntityType);
+            }
+            return relatedEntity;
+        }
+        return null;
+    }
+
+    @Override
+    public EntityCollection findRelatedList(QuarkEntity entity, EdmNavigationProperty edmNavigationProperty,
+                                            Map<String, QueryOption> queryOptions) throws ODataApplicationException {
+        EntityCollection entityCollection = new EntityCollection();
+        List<Entity> entities = entityCollection.getEntities();
+        List<GenericEntity> genericEntities = entityService.findRelatedEntity(entity.getGenericEntity(), edmNavigationProperty.getName(), queryOptions);
+        if (genericEntities != null && genericEntities.size() > 0) {
+            EdmEntityType edmEntityType = (EdmEntityType) edmNavigationProperty.getType();
+            List<QuarkEntity> relatedEntities = Util.GenericToEntities(edmEntityType, genericEntities);
+            if (queryOptions != null && queryOptions.get("expandOption") != null) {
+                addExpandOption((ExpandOption) queryOptions.get("expandOption"), relatedEntities, edmEntityType);
+            }
+            entities.addAll(relatedEntities);
+        }
+        return entityCollection;
+    }
+
+    private void addExpandOption(ExpandOption expandOption, List<QuarkEntity> entities,
                                  EdmEntityType edmEntityType) throws ODataApplicationException {
         if (expandOption == null) {
             return;
@@ -70,10 +120,10 @@ public class QuarkProcessorImpl implements QuarkProcessor{
         }
     }
 
-    private void addExpandNavigation(List<Entity> entities, EdmEntityType edmEntityType, EdmNavigationProperty navigationProperty, int expandLevel) {
+    private void addExpandNavigation(List<QuarkEntity> entities, EdmEntityType edmEntityType, EdmNavigationProperty navigationProperty, int expandLevel) {
     }
 
-    private void addAllExpandItem(List<Entity> entities, ExpandItem expandItem,
+    private void addAllExpandItem(List<QuarkEntity> entities, ExpandItem expandItem,
                                   EdmEntityType edmEntityType) throws ODataApplicationException {
         EdmNavigationProperty edmNavigationProperty = null;
         LevelsExpandOption levelsExpandOption = expandItem.getLevelsOption();
@@ -168,7 +218,7 @@ public class QuarkProcessorImpl implements QuarkProcessor{
             throws ODataApplicationException {
         EntityCollection entityCollection = new EntityCollection();
         List<GenericEntity> genericEntities = entityService.findRelatedEntity(entity.getGenericEntity(), edmNavigationProperty.getName(), queryOptions);
-        List<Entity> entities = Util.GenericToEntities(edmNavigationProperty.getType(), genericEntities);
+        List<QuarkEntity> entities = Util.GenericToEntities(edmNavigationProperty.getType(), genericEntities);
         //filter、orderby、page
         FilterOption filterOption = (FilterOption) queryOptions.get("filterOption");
         OrderByOption orderbyOption = (OrderByOption) queryOptions.get("orderByOption");
@@ -183,7 +233,7 @@ public class QuarkProcessorImpl implements QuarkProcessor{
 //        }
 //        Util.pageEntityCollection(entityCollection, skipValue, topValue);
         if (queryOptions != null && queryOptions.get("expandOption") != null) {
-            addExpandOption((ExpandOption) queryOptions.get("expandOption"), entityCollection.getEntities(), edmNavigationProperty.getType());
+            addExpandOption((ExpandOption) queryOptions.get("expandOption"), entities, edmNavigationProperty.getType());
         }
         return entityCollection;
     }
