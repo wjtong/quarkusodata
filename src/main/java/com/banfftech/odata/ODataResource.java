@@ -2,6 +2,7 @@ package com.banfftech.odata;
 
 import com.banfftech.Util;
 import com.banfftech.odata.processor.EntityCollectionImp;
+import com.banfftech.odata.processor.EntityImpl;
 import com.banfftech.odata.processor.QuarkProcessor;
 import com.banfftech.service.EntityService;
 import jakarta.inject.Inject;
@@ -16,6 +17,7 @@ import org.apache.olingo.commons.api.http.HttpHeader;
 import org.apache.olingo.commons.api.http.HttpMethod;
 import org.apache.olingo.server.api.*;
 import org.apache.olingo.server.api.processor.EntityCollectionProcessor;
+import org.apache.olingo.server.api.processor.Processor;
 import org.apache.olingo.server.api.serializer.ODataSerializer;
 import org.apache.olingo.server.api.serializer.SerializerResult;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -87,8 +89,8 @@ public class ODataResource {
             OData odata = OData.newInstance();
             ServiceMetadata serviceMetadata = odata.createServiceMetadata(edmProvider, new ArrayList<>());
             ODataHandler handler = odata.createRawHandler(serviceMetadata);
-            EntityCollectionProcessor processor = new EntityCollectionImp(quarkProcessor);
-            handler.register(processor);
+            handler.register(new EntityCollectionImp(quarkProcessor));
+            handler.register(new EntityImpl(quarkProcessor));
             response = handler.process(request);
         } catch (NotSupportedException e) {
             LOGGER.severe("Method not allowed: " + e.getMessage());
