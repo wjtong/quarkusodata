@@ -7,8 +7,10 @@ import com.banfftech.odata.processor.QuarkProcessor;
 import com.banfftech.service.EntityService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 import org.apache.commons.io.IOUtils;
 import org.apache.olingo.commons.api.edm.provider.CsdlEdmProvider;
 import org.apache.olingo.commons.api.ex.ODataException;
@@ -35,6 +37,8 @@ public class ODataResource {
     EdmConfigLoader edmConfigLoader;
     @Inject
     QuarkProcessor quarkProcessor;
+    @Context
+    UriInfo uriInfo;
 
     private static String serviceName = "CustRequestManage"; // should be from request path
     @GET
@@ -72,7 +76,8 @@ public class ODataResource {
                                         @QueryParam("$filter") String filter,
                                         @QueryParam("$expand") String expand) {
         ODataRequest request = new ODataRequest();
-        String baseUri = "http://localhost:8080/odata.svc";
+        String baseUri = uriInfo.getBaseUri().toString();
+//        String baseUri = "http://localhost:8080/odata.svc";
         String queryString = Util.getQueryString(filter, expand);
         request.setRawBaseUri(baseUri);
         request.setRawODataPath(odataPath);
