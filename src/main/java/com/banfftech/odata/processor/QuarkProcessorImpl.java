@@ -2,6 +2,7 @@ package com.banfftech.odata.processor;
 
 import com.banfftech.Util;
 import com.banfftech.csdl.QuarkCsdlEntityType;
+import com.banfftech.edmconfig.EdmConst;
 import com.banfftech.model.GenericEntity;
 import com.banfftech.odata.QuarkEntity;
 import com.banfftech.service.EntityService;
@@ -40,10 +41,11 @@ public class QuarkProcessorImpl implements QuarkProcessor{
         List<GenericEntity> genericEntities = entityService.findEntity(entityName, queryOptions);
         List<QuarkEntity> entities = Util.GenericToEntities(edmEntityType, genericEntities);
         EntityCollection entityCollection = new EntityCollection();
-        entityCollection.getEntities().addAll(entities);
+        entityCollection.setCount(entities.size());
         if (queryOptions != null && queryOptions.get("expandOption") != null) {
             addExpandOption((ExpandOption) queryOptions.get("expandOption"), entities, edmEntityType);
         }
+        entityCollection.getEntities().addAll(entities);
         return entityCollection;
     }
 
@@ -76,23 +78,6 @@ public class QuarkProcessorImpl implements QuarkProcessor{
             return relatedEntity;
         }
         return null;
-    }
-
-    @Override
-    public EntityCollection findRelatedList(QuarkEntity entity, EdmNavigationProperty edmNavigationProperty,
-                                            Map<String, QueryOption> queryOptions) throws ODataApplicationException {
-        EntityCollection entityCollection = new EntityCollection();
-        List<Entity> entities = entityCollection.getEntities();
-        List<GenericEntity> genericEntities = entityService.findRelatedEntity(entity.getGenericEntity(), edmNavigationProperty.getName(), queryOptions);
-        if (genericEntities != null && genericEntities.size() > 0) {
-            EdmEntityType edmEntityType = (EdmEntityType) edmNavigationProperty.getType();
-            List<QuarkEntity> relatedEntities = Util.GenericToEntities(edmEntityType, genericEntities);
-            if (queryOptions != null && queryOptions.get("expandOption") != null) {
-                addExpandOption((ExpandOption) queryOptions.get("expandOption"), relatedEntities, edmEntityType);
-            }
-            entities.addAll(relatedEntities);
-        }
-        return entityCollection;
     }
 
     private void addExpandOption(ExpandOption expandOption, List<QuarkEntity> entities,
@@ -211,30 +196,49 @@ public class QuarkProcessorImpl implements QuarkProcessor{
         Map<String, Object> embeddedEdmParams = new HashMap<>();
         embeddedEdmParams.put("edmEntityType", edmEntityType);
         embeddedEdmParams.put("edmNavigationProperty", edmNavigationProperty);
-        return findRelatedList((QuarkEntity) entity, edmNavigationProperty, queryOptions, null);
+        return findRelatedList((QuarkEntity) entity, edmNavigationProperty, queryOptions);
     }
+//    @Override
+//    public EntityCollection findRelatedList(QuarkEntity entity, EdmNavigationProperty edmNavigationProperty,
+//                                            Map<String, QueryOption> queryOptions) throws ODataApplicationException {
+//        EntityCollection entityCollection = new EntityCollection();
+//        List<Entity> entities = entityCollection.getEntities();
+//        List<GenericEntity> genericEntities = entityService.findRelatedEntity(entity.getGenericEntity(), edmNavigationProperty.getName(), queryOptions);
+//        if (genericEntities != null && genericEntities.size() > 0) {
+//            EdmEntityType edmEntityType = (EdmEntityType) edmNavigationProperty.getType();
+//            List<QuarkEntity> relatedEntities = Util.GenericToEntities(edmEntityType, genericEntities);
+//            if (queryOptions != null && queryOptions.get("expandOption") != null) {
+//                addExpandOption((ExpandOption) queryOptions.get("expandOption"), relatedEntities, edmEntityType);
+//            }
+//            entities.addAll(relatedEntities);
+//        }
+//        return entityCollection;
+//    }
+    @Override
     public EntityCollection findRelatedList(QuarkEntity entity, EdmNavigationProperty edmNavigationProperty,
-                                            Map<String, QueryOption> queryOptions, Map<String, Object> navPrimaryKey)
+                                            Map<String, QueryOption> queryOptions)
             throws ODataApplicationException {
         EntityCollection entityCollection = new EntityCollection();
         List<GenericEntity> genericEntities = entityService.findRelatedEntity(entity.getGenericEntity(), edmNavigationProperty.getName(), queryOptions);
         List<QuarkEntity> entities = Util.GenericToEntities(edmNavigationProperty.getType(), genericEntities);
         //filter、orderby、page
-        FilterOption filterOption = (FilterOption) queryOptions.get("filterOption");
-        OrderByOption orderbyOption = (OrderByOption) queryOptions.get("orderByOption");
+        FilterOption filterOption = queryOptions != null? (FilterOption) queryOptions.get("filterOption"):null;
+        OrderByOption orderbyOption = queryOptions != null? (OrderByOption) queryOptions.get("orderByOption"):null;
 //        if (filterOption != null || orderbyOption != null) {
 //            Util.filterEntityCollection(entityCollection, filterOption, orderbyOption, edmNavigationProperty.getType(),
 //                    edmProvider, delegator, dispatcher, userLogin, locale, csdlNavigationProperty.isFilterByDate());
 //        }
-        entityCollection.getEntities().addAll(entities);
-        entityCollection.setCount(entityCollection.getEntities().size());
 //        if (Util.isExtraOrderby(orderbyOption, navCsdlEntityType, delegator)) {
 //            Util.orderbyEntityCollection(entityCollection, orderbyOption, edmNavigationProperty.getType(), edmProvider);
 //        }
-//        Util.pageEntityCollection(entityCollection, skipValue, topValue);
+        entityCollection.setCount(entities.size());
+        SkipOption skipOption = queryOptions != null? (SkipOption) queryOptions.get("skipOption"):null;
+        TopOption topOption = queryOptions != null? (TopOption) queryOptions.get("topOption"):null;
+        Util.pageEntityCollection(entityCollection, skipOption != null? skipOption.getValue():0, topOption != null? topOption.getValue(): EdmConst.MAX_ROWS);
         if (queryOptions != null && queryOptions.get("expandOption") != null) {
             addExpandOption((ExpandOption) queryOptions.get("expandOption"), entities, edmNavigationProperty.getType());
         }
+        entityCollection.getEntities().addAll(entities);
         return entityCollection;
     }
 

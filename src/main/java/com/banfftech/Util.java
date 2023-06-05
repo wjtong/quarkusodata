@@ -4,6 +4,7 @@ import com.banfftech.edmconfig.EdmConst;
 import com.banfftech.model.GenericEntity;
 import com.banfftech.odata.QuarkEntity;
 import org.apache.olingo.commons.api.data.Entity;
+import org.apache.olingo.commons.api.data.EntityCollection;
 import org.apache.olingo.commons.api.data.Property;
 import org.apache.olingo.commons.api.data.ValueType;
 import org.apache.olingo.commons.api.edm.EdmEntityType;
@@ -121,5 +122,22 @@ public class Util {
             queryOptions.put("applyOption", applyOption);
         }
         return queryOptions;
+    }
+    /**
+     * 对EntityCollection中的实体数据进行分页
+     */
+    public static void pageEntityCollection(EntityCollection entityCollection, int skip, int top) {
+        List<Entity> entities = entityCollection.getEntities();
+        List<Entity> entitiesPage;
+        if ((skip + top) > entities.size()) {
+            if (entities.size() <= skip) {
+                return;
+            }
+            entitiesPage = new ArrayList<>(entities.subList(skip, entities.size()));
+        } else {
+            entitiesPage = new ArrayList<>(entities.subList(skip, skip + top));
+        }
+        entityCollection.getEntities().clear();
+        entityCollection.getEntities().addAll(entitiesPage);
     }
 }
