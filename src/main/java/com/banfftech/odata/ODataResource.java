@@ -74,11 +74,18 @@ public class ODataResource {
     @Path("/{odataPath:.+}")
     public Response processODataRequest(@PathParam("odataPath") String odataPath,
                                         @QueryParam("$filter") String filter,
-                                        @QueryParam("$expand") String expand) {
+                                        @QueryParam("$expand") String expand,
+                                        @QueryParam("$select") String select,
+                                        @QueryParam("$orderby") String orderby,
+                                        @QueryParam("$top") String top,
+                                        @QueryParam("$skip") String skip,
+                                        @QueryParam("$count") String count,
+                                        @QueryParam("$search") String search,
+                                        @QueryParam("$apply") String apply) {
         ODataRequest request = new ODataRequest();
         String baseUri = uriInfo.getBaseUri().toString();
 //        String baseUri = "http://localhost:8080/odata.svc";
-        String queryString = Util.getQueryString(filter, expand);
+        String queryString = Util.getQueryString(filter, expand, select, orderby, top, skip);
         request.setRawBaseUri(baseUri);
         request.setRawODataPath(odataPath);
         request.setRawServiceResolutionUri("/");

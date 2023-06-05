@@ -53,8 +53,8 @@ public class Util {
         }
     }
 
-    public static List<QuarkEntity> GenericToEntities(EdmEntityType edmEntityType, List<GenericEntity> genericEntities) {
-        List<QuarkEntity> entities = new ArrayList<>();
+    public static List<Entity> GenericToEntities(EdmEntityType edmEntityType, List<GenericEntity> genericEntities) {
+        List<Entity> entities = new ArrayList<>();
         for (GenericEntity genericEntity:genericEntities) {
             QuarkEntity entity = GenericToEntity(edmEntityType, genericEntity);
             entities.add(entity);
@@ -72,7 +72,7 @@ public class Util {
         }
         return list;
     }
-    public static String getQueryString(String filter, String expand) {
+    public static String getQueryString(String filter, String expand, String select, String orderBy, String top, String skip) {
         String queryString = null;
         if (filter != null) {
             queryString = "$filter=" + filter;
@@ -80,6 +80,19 @@ public class Util {
         if (expand != null) {
             queryString = queryString != null ? queryString + "&$expand=" + expand : "$expand=" + expand;
         }
+        if (select != null) {
+            queryString = queryString != null ? queryString + "&$select=" + select : "$select=" + select;
+        }
+        if (orderBy != null) {
+            queryString = queryString != null ? queryString + "&$orderby=" + orderBy : "$orderby=" + orderBy;
+        }
+        if (top != null) {
+            queryString = queryString != null ? queryString + "&$top=" + top : "$top=" + top;
+        }
+        if (skip != null) {
+            queryString = queryString != null ? queryString + "&$skip=" + skip : "$skip=" + skip;
+        }
+
         return queryString;
     }
 

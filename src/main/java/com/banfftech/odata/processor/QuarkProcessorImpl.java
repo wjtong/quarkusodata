@@ -39,13 +39,16 @@ public class QuarkProcessorImpl implements QuarkProcessor{
             QueryOption> queryOptions) throws ODataApplicationException {
         String entityName = edmEntityType.getName();
         List<GenericEntity> genericEntities = entityService.findEntity(entityName, queryOptions);
-        List<QuarkEntity> entities = Util.GenericToEntities(edmEntityType, genericEntities);
+        List<Entity> entities = Util.GenericToEntities(edmEntityType, genericEntities);
         EntityCollection entityCollection = new EntityCollection();
         entityCollection.setCount(entities.size());
+        entityCollection.getEntities().addAll(entities);
+        SkipOption skipOption = queryOptions != null? (SkipOption) queryOptions.get("skipOption"):null;
+        TopOption topOption = queryOptions != null? (TopOption) queryOptions.get("topOption"):null;
+        Util.pageEntityCollection(entityCollection, skipOption != null? skipOption.getValue():0, topOption != null? topOption.getValue(): EdmConst.MAX_ROWS);
         if (queryOptions != null && queryOptions.get("expandOption") != null) {
             addExpandOption((ExpandOption) queryOptions.get("expandOption"), entities, edmEntityType);
         }
-        entityCollection.getEntities().addAll(entities);
         return entityCollection;
     }
 
@@ -80,7 +83,7 @@ public class QuarkProcessorImpl implements QuarkProcessor{
         return null;
     }
 
-    private void addExpandOption(ExpandOption expandOption, List<QuarkEntity> entities,
+    private void addExpandOption(ExpandOption expandOption, List<Entity> entities,
                                  EdmEntityType edmEntityType) throws ODataApplicationException {
         if (expandOption == null) {
             return;
@@ -105,10 +108,10 @@ public class QuarkProcessorImpl implements QuarkProcessor{
         }
     }
 
-    private void addExpandNavigation(List<QuarkEntity> entities, EdmEntityType edmEntityType, EdmNavigationProperty navigationProperty, int expandLevel) {
+    private void addExpandNavigation(List<Entity> entities, EdmEntityType edmEntityType, EdmNavigationProperty navigationProperty, int expandLevel) {
     }
 
-    private void addAllExpandItem(List<QuarkEntity> entities, ExpandItem expandItem,
+    private void addAllExpandItem(List<Entity> entities, ExpandItem expandItem,
                                   EdmEntityType edmEntityType) throws ODataApplicationException {
         EdmNavigationProperty edmNavigationProperty = null;
         LevelsExpandOption levelsExpandOption = expandItem.getLevelsOption();
@@ -220,7 +223,7 @@ public class QuarkProcessorImpl implements QuarkProcessor{
             throws ODataApplicationException {
         EntityCollection entityCollection = new EntityCollection();
         List<GenericEntity> genericEntities = entityService.findRelatedEntity(entity.getGenericEntity(), edmNavigationProperty.getName(), queryOptions);
-        List<QuarkEntity> entities = Util.GenericToEntities(edmNavigationProperty.getType(), genericEntities);
+        List<Entity> entities = Util.GenericToEntities(edmNavigationProperty.getType(), genericEntities);
         //filter、orderby、page
         FilterOption filterOption = queryOptions != null? (FilterOption) queryOptions.get("filterOption"):null;
         OrderByOption orderbyOption = queryOptions != null? (OrderByOption) queryOptions.get("orderByOption"):null;
@@ -232,13 +235,13 @@ public class QuarkProcessorImpl implements QuarkProcessor{
 //            Util.orderbyEntityCollection(entityCollection, orderbyOption, edmNavigationProperty.getType(), edmProvider);
 //        }
         entityCollection.setCount(entities.size());
+        entityCollection.getEntities().addAll(entities);
         SkipOption skipOption = queryOptions != null? (SkipOption) queryOptions.get("skipOption"):null;
         TopOption topOption = queryOptions != null? (TopOption) queryOptions.get("topOption"):null;
         Util.pageEntityCollection(entityCollection, skipOption != null? skipOption.getValue():0, topOption != null? topOption.getValue(): EdmConst.MAX_ROWS);
         if (queryOptions != null && queryOptions.get("expandOption") != null) {
-            addExpandOption((ExpandOption) queryOptions.get("expandOption"), entities, edmNavigationProperty.getType());
+            addExpandOption((ExpandOption) queryOptions.get("expandOption"), entityCollection.getEntities(), edmNavigationProperty.getType());
         }
-        entityCollection.getEntities().addAll(entities);
         return entityCollection;
     }
 

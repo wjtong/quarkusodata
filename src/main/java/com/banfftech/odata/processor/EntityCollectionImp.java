@@ -96,6 +96,7 @@ public class EntityCollectionImp implements org.apache.olingo.server.api.process
                     targetEntityType = edmEntityType;
                     edmBindingTarget = edmBindingTarget.getRelatedBindingTarget(edmNavigationProperty.getName());
                 }
+                i++;
             }
             serializeEntityCollection(request, response, edmBindingTarget, targetEntityType,
                     responseFormat, entityCollection, queryOptions);
