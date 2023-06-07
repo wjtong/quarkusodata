@@ -9,4 +9,5 @@ import java.util.List;
 public interface PartyService {
     Party create(Party party);
     List<Party> list();
+    Party get(String id);
 }

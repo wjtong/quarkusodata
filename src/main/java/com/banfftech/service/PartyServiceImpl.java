@@ -1,13 +1,24 @@
 package com.banfftech.service;
 
+import com.banfftech.model.GenericEntity;
 import com.banfftech.model.Party;
+import com.banfftech.model.Product;
+import com.banfftech.model.SupplierProduct;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
+import org.hibernate.Session;
+import org.hibernate.query.Query;
 
 import java.util.List;
 
 @ApplicationScoped
 public class PartyServiceImpl implements PartyService{
+    @Inject
+    private Session session;
+
     @Override
     @Transactional
     public Party create(Party party) {
@@ -19,4 +30,22 @@ public class PartyServiceImpl implements PartyService{
     public List<Party> list() {
         return Party.listAll();
     }
+
+    @Override
+    public Party get(String id) {
+        Party party =  Party.findById(id);
+        String hql = "from SupplierProduct sp left join Product p on sp.productId = p.id where sp.party = :party and p.productName like '%10100%' ";
+        Query query = session.createQuery(hql, SupplierProduct.class);
+        query.setParameter("party", party);
+        List<GenericEntity> result = query.list();
+        System.out.println(result);
+        // write query again using CriteriaQuery
+        CriteriaQuery<SupplierProduct> criteriaQuery = session.getCriteriaBuilder().createQuery(SupplierProduct.class);
+        Root<SupplierProduct> root = criteriaQuery.from(SupplierProduct.class);
+        criteriaQuery.where(session.getCriteriaBuilder().equal(root.get("party"), party));
+        List<SupplierProduct> supplierProducts = session.createQuery(criteriaQuery).getResultList();
+        System.out.println(supplierProducts);
+        return party;
+    }
+
 }

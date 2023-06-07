@@ -15,6 +15,10 @@ public class SupplierProduct extends GenericEntity {
     @ManyToOne(optional = true, fetch = FetchType.LAZY)
     @JsonIgnore
     public Party party;
+    @JoinColumn(name = "productId", referencedColumnName = "id", insertable = false, updatable = false)
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    public Product product;
 
     public static String add(String partyId, String productId) {
         SupplierProduct supplierProduct = new SupplierProduct();

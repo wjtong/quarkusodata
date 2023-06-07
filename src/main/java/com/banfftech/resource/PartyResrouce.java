@@ -27,8 +27,8 @@ public class PartyResrouce {
 
     @GET
     @Path("/{id}")
-    public Party get(Long id) {
-        return Party.findById(id);
+    public Party get(String id) {
+        return partyService.get(id);
     }
 
     @POST
