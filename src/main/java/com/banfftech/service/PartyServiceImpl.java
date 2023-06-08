@@ -6,7 +6,9 @@ import com.banfftech.model.Product;
 import com.banfftech.model.SupplierProduct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 import org.hibernate.Session;
@@ -40,11 +42,19 @@ public class PartyServiceImpl implements PartyService{
         List<GenericEntity> result = query.list();
         System.out.println(result);
         // write query again using CriteriaQuery
-        CriteriaQuery<SupplierProduct> criteriaQuery = session.getCriteriaBuilder().createQuery(SupplierProduct.class);
+        CriteriaBuilder builder = session.getCriteriaBuilder();
+        CriteriaQuery<SupplierProduct> criteriaQuery = builder.createQuery(SupplierProduct.class);
         Root<SupplierProduct> root = criteriaQuery.from(SupplierProduct.class);
-        criteriaQuery.where(session.getCriteriaBuilder().equal(root.get("party"), party));
+        Predicate partyRestriction = builder.equal(root.get("party"), party);
+        Predicate productRestriction = builder.like(root.get("product").get("productName"), "%10100%");
+        criteriaQuery.where(builder.and(partyRestriction, productRestriction));
         List<SupplierProduct> supplierProducts = session.createQuery(criteriaQuery).getResultList();
         System.out.println(supplierProducts);
+        // write another sample using CriteriaQuery
+        builder = session.getCriteriaBuilder();
+        CriteriaQuery<Party> partyCriteriaQuery = builder.createQuery(Party.class);
+        Root<Party> partyRoot = partyCriteriaQuery.from(Party.class);
+        productRestriction = builder.any(partyRoot.get("product").get("productName").in("10100"));
         return party;
     }
 
