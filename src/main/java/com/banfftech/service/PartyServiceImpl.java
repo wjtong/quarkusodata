@@ -6,10 +6,7 @@ import com.banfftech.model.Product;
 import com.banfftech.model.SupplierProduct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.*;
 import jakarta.transaction.Transactional;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
@@ -54,7 +51,13 @@ public class PartyServiceImpl implements PartyService{
         builder = session.getCriteriaBuilder();
         CriteriaQuery<Party> partyCriteriaQuery = builder.createQuery(Party.class);
         Root<Party> partyRoot = partyCriteriaQuery.from(Party.class);
-        productRestriction = builder.any(partyRoot.get("product").get("productName").in("10100"));
+        Subquery<Product> subquery = partyCriteriaQuery.subquery(Product.class);
+        Root<Product> productRoot = subquery.from(Product.class);
+        productRestriction = builder.like(productRoot.get("productName"), "%10100%");
+        subquery = subquery.where(productRestriction);
+        partyCriteriaQuery.where(builder.exists(subquery));
+        List<Party> parties = session.createQuery(partyCriteriaQuery).getResultList();
+        System.out.println(parties);
         return party;
     }
 
