@@ -4,6 +4,7 @@ import com.banfftech.model.GenericEntity;
 import io.quarkus.elytron.security.common.BcryptUtil;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.JoinFormula;
 
 import java.time.LocalDate;

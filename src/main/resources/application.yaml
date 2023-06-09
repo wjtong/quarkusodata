@@ -11,3 +11,6 @@ quarkus:
   hibernate-orm:
     database:
       generation: drop-and-create
+    log:
+        sql: true
+        format_sql: true
